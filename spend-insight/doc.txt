@@ -1,0 +1,18 @@
+Users Collection:
+
+Document for each user containing user-related information like name, email, and other user-specific data.
+Transactions Collection:
+
+Document for each transaction containing transaction details such as category, date, amount, and notes.
+Each document can have fields like category (string), date (timestamp), amount (number), and notes (string).
+You can also include additional fields like userId to associate the transaction with a specific user.
+Categories Collection:
+
+Document for each category containing category details like name, icon, and any other relevant information.
+Each document can have fields like name (string), icon (string), and other category-specific data.
+This collection can be used to populate category options in the transaction form or for any category-related functionality.
+Budgets Collection (optional):
+
+Document for each budget containing budget details like category, amount, and time period.
+Each document can have fields like category (string), amount (number), start (timestamp), and end (timestamp).
+This collection can be used to track budget limits and provide insights into spending within budgeted amounts.
