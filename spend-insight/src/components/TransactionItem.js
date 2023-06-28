@@ -10,7 +10,7 @@ const TransactionItem = ({ category, date, amount, notes }) => {
         <div className="transaction-item-category">{category}</div>
         <div className="transaction-item-date">{date}</div>
         <div className="transaction-item-notes">{notes}</div>
-        <div className="transaction-item-amount">${amount}</div>
+        <div className="transaction-item-amount">{amount}</div>
       </div>
     </div>
   );
