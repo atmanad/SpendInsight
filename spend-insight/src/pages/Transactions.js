@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
@@ -7,9 +7,13 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { format } from 'date-fns';
-import api from '../api/api'
+import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { groupBy } from 'lodash';
+import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+
 
 const Transactions = () => {
   const [showModal, setShowModal] = useState(false);
@@ -19,35 +23,78 @@ const Transactions = () => {
     amount: '',
     notes: ''
   });
-  const [transactions, setTransactions] = useState([])
+  const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [isCalendarVisible, setCalendarVisible] = useState(false);
 
-  // To update a specific property in the transaction object, use the spread operator
+
+  useEffect(() => {
+    fetchTransactions();
+    fetchCategories();
+  }, [selectedMonth]);
+
+
+  //handleChange
   const handleChange = (event) => {
     setTransaction({ ...transaction, [event.target.name]: event.target.value });
   };
+
   const handleDateChange = (date) => {
     setTransaction({ ...transaction, date: date });
   };
 
+  const handleMonthChange = (date) => {
+    setSelectedMonth(date);
+    fetchTransactions();
+    toggleCalendarVisibility();
+  };
+
+  const toggleCalendarVisibility = () => {
+    setCalendarVisible(!isCalendarVisible);
+    console.log(selectedMonth)
+  };
+
+
+
+  //handle API
   const fetchTransactions = async () => {
     try {
-      const response = await api.Transaction.list();
+      const firstDayOfMonth = startOfMonth(selectedMonth);
+      const lastDayOfMonth = endOfMonth(selectedMonth);
+      // Format the dates to send in the API request
+      // const startDate = format(firstDayOfMonth, 'yyyy-MM-dd');
+      // const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
+      // console.log(firstDayOfMonth, lastDayOfMonth, startDate, endDate);
+      // console.log(new Date(endDate));
+
+      const response = await api.Transaction.listByMonth(firstDayOfMonth, lastDayOfMonth);
       console.log(response);
-      if(response.status === 200){
+      if (response.status === 200) {
         setTransactions(response.data);
+        console.log(response.data);
       }
     } catch (error) {
       console.log(error);
     }
-  }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.Category.list();
+      if (response.status === 200) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleAddTransaction = async () => {
-    // Validate the required fields
     if (!transaction.category || !transaction.amount) {
       alert('Please select a category and enter an amount');
       return;
     }
-    // Create a new transaction object with the submitted data
     const newTransaction = {
       category: transaction.category,
       date: transaction.date.toISOString().substring(0, 10),
@@ -60,7 +107,6 @@ const Transactions = () => {
       const response = await api.Transaction.insert(newTransaction);
       console.log(response);
       if (response.status === 200) {
-        // Clear the form fields
         setTransaction({
           category: '',
           date: new Date(),
@@ -68,17 +114,23 @@ const Transactions = () => {
           notes: ''
         });
 
-        // Close the modal 
         setShowModal(false);
+        fetchTransactions();
       }
     } catch (error) {
       console.log(error);
     }
   };
 
+  const groupedTransactions = groupBy(transactions, (transaction) =>
+    format(new Date(transaction.Date), 'dd MMM yy')
+  );
+
+
+  console.log(groupedTransactions);
 
   return (
-    <div className='container'>
+    <div className='container transactions-container'>
       <h1>Transactions</h1>
 
       <Row>
@@ -100,28 +152,47 @@ const Transactions = () => {
         </Col>
       </Row>
 
-      <Button variant="primary" className="mt-4" onClick={() => setShowModal(true)}>
+      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
         Add Transaction
       </Button>
-      <Button variant="primary" className="mt-4" onClick={() => fetchTransactions(true)}>
+      {/* <Button variant="primary" className="mt-4" onClick={() => fetchTransactions(true)}>
         Fetch Transactions
+      </Button> */}
+
+      <Button variant="secondary" className='ml-4 mt-4' onClick={toggleCalendarVisibility}>
+        Select Month
       </Button>
-      <div>
-
-        {/* Display individual transactions */}
-        {transactions.map((transaction) => (
-          <TransactionItem
-            key={transaction.ID}
-            category={transaction.Category}
-            date={format(new Date(transaction.Date), 'dd MMM yy')}
-            amount={transaction.Amount}
-            notes={transaction.Notes}
+      <div className="calendar">
+        {isCalendarVisible && (
+          <DatePicker
+            selected={selectedMonth}
+            onChange={handleMonthChange}
+            dateFormat="MMMM yyyy"
+            showMonthYearPicker
+            className="form-control"
           />
-        ))}
-
-        {/* Add Transaction button and modal */}
-        {/* ... */}
+        )}
       </div>
+
+
+      <div>
+        {Object.keys(groupedTransactions).map((date) => (
+          <div key={date} className="transactions-group container">
+            <h4>{date}</h4>
+            {groupedTransactions[date].map((transaction) => (
+              <TransactionItem
+                key={transaction.ID}
+                category={transaction.Category}
+                amount={transaction.Amount}
+                notes={transaction.Notes}
+                id={transaction.ID}
+                fetchTransactions={fetchTransactions}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add Transaction</Modal.Title>
@@ -130,12 +201,11 @@ const Transactions = () => {
           <Form onChange={handleChange}>
             <Form.Group controlId="category">
               <Form.Label>Category</Form.Label>
-              <Form.Control as="select" name='category'>
+              <Form.Control as="select" name='category' value={transaction.category} onChange={handleChange}>
                 <option value="">Select Category</option>
-                <option value="groceries">Groceries</option>
-                <option value="dining">Dining</option>
-                <option value="shopping">Shopping</option>
-                {/* Add more categories as needed */}
+                {categories.map((category) => (
+                  <option key={category.CategoryID} value={category.CategoryName}>{category.CategoryName}</option>
+                ))}
               </Form.Control>
             </Form.Group>
 

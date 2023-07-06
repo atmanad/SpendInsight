@@ -1,25 +1,56 @@
 .transaction-item {
-    border-radius: 8px;
-    background-color: #f1f1f1;
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .transaction-item-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .transaction-item-category,
-  .transaction-item-date,
-  .transaction-item-notes {
-    flex-basis: 25%;
-  }
-  
-  .transaction-item-amount {
-    flex-basis: 15%;
-    text-align: right;
-    font-weight: bold;
-  }
-  
+  border-radius: 8px;
+  background-color: #f1f1f1;
+  padding: 10px;
+  margin-bottom: 2px;
+}
+
+.transaction-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.transaction-item-category {
+  font-weight: bold;
+}
+
+.transaction-item-category,
+.transaction-item-date,
+.transaction-item-notes {
+  flex-basis: 25%;
+}
+
+.transaction-item-amount {
+  flex-basis: 15%;
+  text-align: right;
+  font-weight: bold;
+}
+
+.delete-button {
+  color: red;
+  border-style: none;
+  font-size: 20px;
+}
+
+.transaction-item-notes {
+  color: #888888;
+}
+
+.add-transaction-button {
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.modal-body .form-group {
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  justify-content: space-between;
+}

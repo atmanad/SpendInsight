@@ -5,7 +5,7 @@ import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';
 import { useAuth0 } from "@auth0/auth0-react";
 import Profile from './Profile';
-import {Link} from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const Header = () => {
     const { user, isAuthenticated, isLoading } = useAuth0();
@@ -17,15 +17,20 @@ const Header = () => {
                 <>
                     <Link to="/dashboard" className="nav-link">Dashboard</Link>
                     <Link to="/transactions" className="nav-link">Transactions</Link>
-                    <Link to="/reports" className="nav-link">Reports</Link>
+                    <Link to="/categories" className="nav-link">Categories</Link>
                     <Link to="/reports" className="nav-link">Reports</Link>
                     <Profile />
-                    
+
                 </>
             );
         } else {
             return (
-                <Nav.Link><LoginButton /></Nav.Link>
+                <>
+                    <Nav.Link><LoginButton /></Nav.Link>
+                    <Link to="/transactions" className="nav-link">Transactions</Link>
+                    <Link to="/categories" className="nav-link">Categories</Link>
+                    <Link to="/labels" className="nav-link">Labels</Link>
+                </>
             );
         }
     };
