@@ -1,7 +1,7 @@
 import axios from "axios";
 
 axios.defaults.baseURL = "http://localhost:3001/api/v1";
-
+console.log("from api");
 const responseBody = (response) => response;
 
 const requests = {
@@ -13,28 +13,35 @@ const requests = {
 };
 
 const Transaction = {
-    list: () => requests.get("/transactions"),
+    list: (userId, selectedMonth) => requests.get(`/transactions?userId=${userId}&month=${selectedMonth}`),
     insert: (data) => requests.post("/transactions", data),
-    listByMonth: (startDate, endDate) => requests.get(`/transactions/month/${startDate}/${endDate}`),
-    delete: (transactionId) => requests.del(`transactions/${transactionId}`)
+    listByMonth: (userId, selectedMonth) => requests.get(`/transactions/?userId=${userId}&selectedMonth=${selectedMonth}`),
+    delete: (userId, transactionId,date) => requests.del(`/transactions?userId=${userId}&transactionId=${transactionId}&date=${date}`)
 };
 
 const Category = {
-    list: () => requests.get("/categories"),
+    list: (userId) => requests.get(`/categories/${userId}` ),
     insert: (data) => requests.post("/categories", data),
-    delete: (categoryId) => requests.del(`/categories/${categoryId}`),
+    delete: (data) => requests.del(`/categories/${data.userId}/${data.categoryId}`),
 }
 
 const Label = {
-    list: () => requests.get("/labels"),
+    list: (userId) => requests.get(`/labels/${userId}`),
     insert: (data) => requests.post("/labels", data),
-    delete: (labelId) => requests.del(`/labels/${labelId}`),
+    delete: (data) => requests.del(`/labels/${data.userId}/${data.labelId}`),
+}
+
+const Expense = {
+    insert: (data) => requests.post("/expenses", data),
+    update: (data) => requests.put("/expenses", data),
+    fetch: (year, month) => requests.get(`/expenses/${year}/${month}`)
 }
 
 const api = {
     Transaction,
     Category,
-    Label
+    Label,
+    Expense
 };
 
 export default api;

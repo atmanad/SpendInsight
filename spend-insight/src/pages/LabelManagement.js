@@ -8,7 +8,7 @@ const LabelManagement = () => {
 
   const fetchLabels = async () => {
     try {
-      const response = await api.Label.list();
+      const response = await api.Label.list("auth0|649a8bf297157d2a7b57e432");
       if (response.status === 200) {
         setLabels(response.data);
       }
@@ -28,25 +28,25 @@ const LabelManagement = () => {
         return;
       }
 
-      const response = await api.Label.insert({ labelName: newLabel });
+      const response = await api.Label.insert({  userId: "auth0|649a8bf297157d2a7b57e432",labelName: newLabel });
       if (response.status === 200) {
         setNewLabel('');
         fetchLabels();
       }
     } catch (error) {
-      console.log(error);
-    }
+      console.error("status: ",error.response.status, "error text: ", error.response.data.error);
+        }
   };
 
   const handleDeleteLabel = async (labelId) => {
     try {
-      const response = await api.Label.delete(labelId);
+      const response = await api.Label.delete({ userId: "auth0|649a8bf297157d2a7b57e432", labelId:labelId});
       if (response.status === 200) {
         fetchLabels();
       }
     } catch (error) {
-      console.log(error);
-    }
+      console.error("status: ",error.response.status, "error text: ", error.response.data.error);
+        }
   };
 
   return (
@@ -76,13 +76,13 @@ const LabelManagement = () => {
         </thead>
         <tbody>
           {labels.map((label) => (
-            <tr key={label.LabelID}>
-              <td>{label.LabelName}</td>
+            <tr key={label._id}>
+              <td>{label.labelName}</td>
               <td>
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => handleDeleteLabel(label.LabelID)}
+                  onClick={() => handleDeleteLabel(label._id)}
                 >
                   Delete
                 </Button>

@@ -8,7 +8,8 @@ const CategoryManagement = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.Category.list();
+      const response = await api.Category.list("auth0|649a8bf297157d2a7b57e432");
+      console.log(response);
       if (response.status === 200) {
         setCategories(response.data);
       }
@@ -28,19 +29,20 @@ const CategoryManagement = () => {
         return;
       }
 
-      const response = await api.Category.insert({ categoryName: newCategory });
+      const response = await api.Category.insert({ userId: "auth0|649a8bf297157d2a7b57e432", categoryName: newCategory });
       if (response.status === 200) {
         setNewCategory('');
         fetchCategories();
       }
     } catch (error) {
-      console.log(error);
+      console.error("status: ",error.response.status, "error text: ", error.response.data.error);
     }
   };
 
   const handleDeleteCategory = async (categoryId) => {
     try {
-      const response = await api.Category.delete(categoryId);
+      console.log(categoryId);
+      const response = await api.Category.delete({ userId: "auth0|649a8bf297157d2a7b57e432", categoryId: categoryId });
       if (response.status === 200) {
         fetchCategories();
       }
@@ -76,13 +78,13 @@ const CategoryManagement = () => {
         </thead>
         <tbody>
           {categories.map((category) => (
-            <tr key={category.CategoryID}>
-              <td>{category.CategoryName}</td>
+            <tr key={category._id}>
+              <td>{category.categoryName}</td>
               <td>
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => handleDeleteCategory(category.CategoryID)}
+                  onClick={() => handleDeleteCategory(category._id)}
                 >
                   Delete
                 </Button>

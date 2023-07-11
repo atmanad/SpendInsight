@@ -11,31 +11,101 @@ import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { groupBy } from 'lodash';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
-import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 
 
 const Transactions = () => {
   const [showModal, setShowModal] = useState(false);
+  const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [transaction, setTransaction] = useState({
     category: '',
     date: new Date(),
     amount: '',
-    notes: ''
+    notes: '',
+    label: ''
   });
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [labels, setLabels] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  console.log("Selected Month", selectedMonth);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [income, setIncome] = useState(0);
+  const [balance, setBalance] = useState(0);
+  const userId = "auth0|649a8bf297157d2a7b57e432";
+  const [previousMonthSummary, setPreviousMonthSummary] = useState({
+    ID: 0,
+    Month: 0,
+    Year: 0,
+    Balance: 0,
+    Income: 0,
+    Expenses: 0
+  });
+
+  const [currentMonthSummary, setCurrentMonthSummary] = useState({
+    ID: 0,
+    Month: 0,
+    Year: 0,
+    Balance: 0,
+    Income: 0,
+    Expenses: 0
+  });
+
+  // useEffects
 
 
   useEffect(() => {
-    fetchTransactions();
     fetchCategories();
+    fetchLabels();
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions(selectedMonth);
+    console.log(selectedMonth);
   }, [selectedMonth]);
 
+  useEffect(() => {
+    calculateTotalExpense();
+  }, [transactions]);
 
-  //handleChange
+  useEffect(() => {
+    console.log("total Expense", totalExpense);
+    console.log(currentMonthSummary.Expenses);
+    if (currentMonthSummary.Month !== 0) {
+      // insertMonthlySummary();
+    }
+  }, [currentMonthSummary.Expenses]);
+
+  useEffect(() => {
+    const currentDate = new Date();
+
+    // Get the current month and year
+    const currentMonth = selectedMonth.getMonth() + 1; // Months are zero-based, so add 1
+    const currentYear = selectedMonth.getFullYear();
+
+    // Get the previous month and year
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
+    console.log("current month, year", currentMonth, " ", currentYear);
+    console.log("previous month, year", previousMonth, " ", previousYear);
+
+
+    fetchPreviousMonthSummary(previousYear, previousMonth);
+    fetchCurrentMonthSummary(currentYear, currentMonth);
+  }, [transactions]);
+
+  useEffect(() => {
+    console.log("current Month Summary", currentMonthSummary);
+  }, [currentMonthSummary]);
+
+  useEffect(() => {
+    console.log("previous Month Summary", previousMonthSummary);
+  }, [previousMonthSummary]);
+
+
+  // handleChange
   const handleChange = (event) => {
     setTransaction({ ...transaction, [event.target.name]: event.target.value });
   };
@@ -52,36 +122,25 @@ const Transactions = () => {
 
   const toggleCalendarVisibility = () => {
     setCalendarVisible(!isCalendarVisible);
-    console.log(selectedMonth)
   };
 
 
-
   //handle API
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (selectedMonth) => {
     try {
-      const firstDayOfMonth = startOfMonth(selectedMonth);
-      const lastDayOfMonth = endOfMonth(selectedMonth);
-      // Format the dates to send in the API request
-      // const startDate = format(firstDayOfMonth, 'yyyy-MM-dd');
-      // const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
-      // console.log(firstDayOfMonth, lastDayOfMonth, startDate, endDate);
-      // console.log(new Date(endDate));
-
-      const response = await api.Transaction.listByMonth(firstDayOfMonth, lastDayOfMonth);
+      const response = await api.Transaction.listByMonth(userId, selectedMonth);
       console.log(response);
       if (response.status === 200) {
         setTransactions(response.data);
-        console.log(response.data);
       }
     } catch (error) {
-      console.log(error);
+      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
     }
   };
 
   const fetchCategories = async () => {
     try {
-      const response = await api.Category.list();
+      const response = await api.Category.list("auth0|649a8bf297157d2a7b57e432");
       if (response.status === 200) {
         setCategories(response.data);
       }
@@ -90,44 +149,113 @@ const Transactions = () => {
     }
   };
 
-  const handleAddTransaction = async () => {
-    if (!transaction.category || !transaction.amount) {
-      alert('Please select a category and enter an amount');
-      return;
-    }
-    const newTransaction = {
-      category: transaction.category,
-      date: transaction.date.toISOString().substring(0, 10),
-      amount: transaction.amount,
-      notes: transaction.notes
-    };
-
-    console.log(newTransaction);
+  const fetchLabels = async () => {
     try {
-      const response = await api.Transaction.insert(newTransaction);
-      console.log(response);
+      const response = await api.Label.list("auth0|649a8bf297157d2a7b57e432");
       if (response.status === 200) {
-        setTransaction({
-          category: '',
-          date: new Date(),
-          amount: '',
-          notes: ''
-        });
-
-        setShowModal(false);
-        fetchTransactions();
+        setLabels(response.data);
       }
     } catch (error) {
       console.log(error);
     }
   };
 
+  const handleAddTransaction = async () => {
+    if (!transaction.category || !transaction.amount || !transaction.label) {
+      alert('Please select a category, a label and enter an amount');
+      return;
+    }
+    const newTransaction = {
+      category: transaction.category,
+      date: transaction.date.toISOString().substring(0, 10),
+      amount: transaction.amount,
+      notes: transaction.notes,
+      label: transaction.label
+    };
+    console.log(newTransaction)
+    try {
+
+      const response = await api.Transaction.insert({ userId: userId, transaction: newTransaction });
+      if (response.status === 200) {
+        setTransaction({
+          category: '',
+          date: new Date(),
+          amount: '',
+          notes: '',
+          label: ''
+        });
+        setShowModal(false);
+        fetchTransactions(selectedMonth);
+      }
+    } catch (error) {
+      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+    }
+  };
+
+  // Fetch monthly summary
+  const fetchPreviousMonthSummary = async (year, month) => {
+    try {
+      const response = await api.Expense.fetch(year, month);
+      if (response.status === 200) {
+        response.data[0] !== undefined && setPreviousMonthSummary(response.data[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const fetchCurrentMonthSummary = async (year, month) => {
+    // console.log(year, month);
+    try {
+      const response = await api.Expense.fetch(year, month);
+      if (response.status === 200) {
+        response.data[0] !== undefined && setCurrentMonthSummary(response.data[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // Insert monthly summary
+  const insertMonthlySummary = async () => {
+    try {
+      console.log(currentMonthSummary);
+      const response = await api.Expense.insert(currentMonthSummary);
+      if (response.status === 200) {
+        console.log("inserting monthly summary", response);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // Calculate balance
+  const calculateRemainingBalance = () => {
+    const tempBalance = 0;
+
+
+  }
+
+  // Group transactions by date
   const groupedTransactions = groupBy(transactions, (transaction) =>
-    format(new Date(transaction.Date), 'dd MMM yy')
+    format(new Date(transaction.date), 'dd MMM yy')
   );
 
-
   console.log(groupedTransactions);
+
+  // Calculate total expense
+  const calculateTotalExpense = () => {
+    let tempExpense = 0;
+    transactions.forEach(t1 => {
+      tempExpense += t1.amount;
+    });
+    setTotalExpense(tempExpense);
+    setCurrentMonthSummary(prevData => ({
+      ...prevData,
+      Expenses: tempExpense
+    }));
+  }
+
 
   return (
     <div className='container transactions-container'>
@@ -146,7 +274,7 @@ const Transactions = () => {
           <Card>
             <Card.Body>
               <Card.Title>Total Expense of the Month</Card.Title>
-              <Card.Text>$500</Card.Text>
+              <Card.Text>{totalExpense}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -155,9 +283,9 @@ const Transactions = () => {
       <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
         Add Transaction
       </Button>
-      {/* <Button variant="primary" className="mt-4" onClick={() => fetchTransactions(true)}>
-        Fetch Transactions
-      </Button> */}
+      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
+        Add Income
+      </Button>
 
       <Button variant="secondary" className='ml-4 mt-4' onClick={toggleCalendarVisibility}>
         Select Month
@@ -174,25 +302,60 @@ const Transactions = () => {
         )}
       </div>
 
-
       <div>
         {Object.keys(groupedTransactions).map((date) => (
-          <div key={date} className="transactions-group container">
-            <h4>{date}</h4>
+          <div key={date} className="transactions-group">
+            <h6>{date}</h6>
             {groupedTransactions[date].map((transaction) => (
               <TransactionItem
-                key={transaction.ID}
-                category={transaction.Category}
-                amount={transaction.Amount}
-                notes={transaction.Notes}
-                id={transaction.ID}
+                key={transaction._id}
+                category={transaction.category}
+                label={transaction.label}
+                amount={transaction.amount}
+                notes={transaction.notes}
+                id={transaction._id}
                 fetchTransactions={fetchTransactions}
+                selectedMonth={selectedMonth}
+                date={transaction.date}
               />
             ))}
           </div>
         ))}
       </div>
+      {/* Income Modal */}
+      <Modal show={showIncomeModal} onHide={() => setShowIncomeModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Income</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onChange={handleChange}>
+            <Form.Group controlId="date">
+              <Form.Label>Date</Form.Label>
+              <br />
+              <DatePicker selected={transaction.date} name='date' dateFormat="dd/MM/yyyy" onChange={handleDateChange} className="form-control" />
+            </Form.Group>
 
+            <Form.Group controlId="amount">
+              <Form.Label>Amount</Form.Label>
+              <Form.Control type="number" name='amount' />
+            </Form.Group>
+
+            <Form.Group controlId="notes">
+              <Form.Label>Notes</Form.Label>
+              <Form.Control as="textarea" name='notes' />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleAddTransaction}>
+            Submit
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      {/* Add Transaction Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add Transaction</Modal.Title>
@@ -204,7 +367,16 @@ const Transactions = () => {
               <Form.Control as="select" name='category' value={transaction.category} onChange={handleChange}>
                 <option value="">Select Category</option>
                 {categories.map((category) => (
-                  <option key={category.CategoryID} value={category.CategoryName}>{category.CategoryName}</option>
+                  <option key={category._id} value={category.categoryName}>{category.categoryName}</option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+            <Form.Group controlId="label">
+              <Form.Label>Label</Form.Label>
+              <Form.Control as="select" name='label' value={transaction.label} onChange={handleChange}>
+                <option value="">Select Label</option>
+                {labels.map((label) => (
+                  <option key={label._id} value={label.labelName}>{label.labelName}</option>
                 ))}
               </Form.Control>
             </Form.Group>

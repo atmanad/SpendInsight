@@ -4,7 +4,9 @@
   padding: 10px;
   margin-bottom: 2px;
 }
-
+.transactions-group{
+padding: 10px;
+}
 .transaction-item-row {
   display: flex;
   align-items: center;

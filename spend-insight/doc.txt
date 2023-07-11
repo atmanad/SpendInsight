@@ -16,3 +16,61 @@ Budgets Collection (optional):
 Document for each budget containing budget details like category, amount, and time period.
 Each document can have fields like category (string), amount (number), start (timestamp), and end (timestamp).
 This collection can be used to track budget limits and provide insights into spending within budgeted amounts.
+
+
+Transaction
+Add
+Delete
+Fetch by month
+UPDATE total expense of a month
+
+Category
+ADD
+DELETE
+
+Labels
+ADD
+DELETE
+
+TODO
+UPDATE remaining balance
+ADD redux
+EDIT transaction
+ADD Label to transaction
+
+
+for remaing balance 
+extract previous month balance
+and show
+
+1. Fetch Transactions, Expenses
+2. Add Transaction > Insert transaction > Fetch transaction
+3. caculate expense > insert > fetch
+
+change month > Fetch transaction 
+
+
+
+
+
+Agm3rKIYTlnuhswz
+
+Users:{
+    userid:[
+        balance:0,
+        expenses:[
+                {
+                    year:2023,
+                    month:1,
+                    transactions:[{id:1,amount:100, category:travel,label:personal, notes:puri, date:1 jan }, {}],
+                    savings:1000,
+                    income:0
+                }
+            ],
+        categories:[],
+        labels:[]
+    ]
+}
+
+sub 
+"auth0|649a8bf297157d2a7b57e432"
