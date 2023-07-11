@@ -37,11 +37,18 @@ const Expense = {
     fetch: (year, month) => requests.get(`/expenses/${year}/${month}`)
 }
 
+const Income = {
+    fetch: (userId, date) => requests.get(`/income?userId=${userId}&date=${date}` ),
+    insert: (data) => requests.post("/income", data),
+    delete: (data) => requests.del(`/income/${data.userId}/${data.categoryId}`),
+}
+
 const api = {
     Transaction,
     Category,
     Label,
-    Expense
+    Expense,
+    Income
 };
 
 export default api;

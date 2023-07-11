@@ -64,7 +64,7 @@ Users:{
                     month:1,
                     transactions:[{id:1,amount:100, category:travel,label:personal, notes:puri, date:1 jan }, {}],
                     savings:1000,
-                    income:0
+                    income:[{_id:345523flw4t23, amount:0, notes:"Salary", date:"1 jan"}]
                 }
             ],
         categories:[],

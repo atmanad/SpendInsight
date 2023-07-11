@@ -17,6 +17,14 @@ import 'react-calendar/dist/Calendar.css';
 const Transactions = () => {
   const [showModal, setShowModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
+  const [income, setIncome] = useState({
+    date: new Date(),
+    amount: '',
+    notes: '',
+  });
+  const [incomes, setIncomes] = useState([]);
+  const [totalIncome, setTotalIncome] = useState(0);
+
   const [transaction, setTransaction] = useState({
     category: '',
     date: new Date(),
@@ -31,7 +39,6 @@ const Transactions = () => {
   console.log("Selected Month", selectedMonth);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
-  const [income, setIncome] = useState(0);
   const [balance, setBalance] = useState(0);
   const userId = "auth0|649a8bf297157d2a7b57e432";
   const [previousMonthSummary, setPreviousMonthSummary] = useState({
@@ -58,6 +65,8 @@ const Transactions = () => {
   useEffect(() => {
     fetchCategories();
     fetchLabels();
+    fetchIncome();
+    calculateTotalIncome();
   }, []);
 
   useEffect(() => {
@@ -104,6 +113,10 @@ const Transactions = () => {
     console.log("previous Month Summary", previousMonthSummary);
   }, [previousMonthSummary]);
 
+  useEffect(() => {
+    calculateTotalIncome(0);
+  }, [incomes]);
+
 
   // handleChange
   const handleChange = (event) => {
@@ -113,6 +126,13 @@ const Transactions = () => {
   const handleDateChange = (date) => {
     setTransaction({ ...transaction, date: date });
   };
+  const handleIncomeChange = (event) => {
+    setIncome({ ...income, [event.target.name]: event.target.value });
+  };
+  const handleIncomeDateChange = (date) => {
+    setIncome({ ...income, date: date });
+  };
+
 
   const handleMonthChange = (date) => {
     setSelectedMonth(date);
@@ -160,6 +180,47 @@ const Transactions = () => {
     }
   };
 
+  //fetch income
+  const fetchIncome = async () => {
+    try {
+      const response = await api.Income.fetch("auth0|649a8bf297157d2a7b57e432", selectedMonth);
+      if (response.status === 200) {
+        console.log((response.data));
+        setIncomes(response.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Add Income
+  const handleAddIncome = async () => {
+    if (!income.amount || !income.notes) {
+      alert('Please enter an amount and note');
+      return;
+    }
+    const newIncome = {
+      date: income.date.toISOString().substring(0, 10),
+      amount: income.amount,
+      notes: income.notes,
+    };
+    console.log(newIncome)
+    try {
+      const response = await api.Income.insert({ userId: userId, income: newIncome });
+      if (response.status === 200) {
+        setIncome({
+          date: new Date(),
+          amount: '',
+          notes: '',
+        });
+        setShowIncomeModal(false);
+      fetchIncome();
+      }
+    } catch (error) {
+      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+    }
+  };
+  // Add Transaction
   const handleAddTransaction = async () => {
     if (!transaction.category || !transaction.amount || !transaction.label) {
       alert('Please select a category, a label and enter an amount');
@@ -230,10 +291,12 @@ const Transactions = () => {
   }
 
   // Calculate balance
-  const calculateRemainingBalance = () => {
-    const tempBalance = 0;
-
-
+  const calculateTotalIncome = () => {
+    let tempIncome = 0;
+    incomes.forEach(income => {
+      tempIncome+=income.amount;
+    });
+    setTotalIncome(tempIncome);
   }
 
   // Group transactions by date
@@ -266,7 +329,7 @@ const Transactions = () => {
           <Card>
             <Card.Body>
               <Card.Title>Total Balance</Card.Title>
-              <Card.Text>$1000</Card.Text>
+              <Card.Text>{totalIncome}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -283,7 +346,7 @@ const Transactions = () => {
       <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
         Add Transaction
       </Button>
-      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
+      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowIncomeModal(true)}>
         Add Income
       </Button>
 
@@ -328,11 +391,11 @@ const Transactions = () => {
           <Modal.Title>Add Income</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onChange={handleChange}>
+          <Form onChange={handleIncomeChange}>
             <Form.Group controlId="date">
               <Form.Label>Date</Form.Label>
               <br />
-              <DatePicker selected={transaction.date} name='date' dateFormat="dd/MM/yyyy" onChange={handleDateChange} className="form-control" />
+              <DatePicker selected={income.date} name='date' dateFormat="dd/MM/yyyy" onChange={handleIncomeDateChange} className="form-control" />
             </Form.Group>
 
             <Form.Group controlId="amount">
@@ -350,7 +413,7 @@ const Transactions = () => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddTransaction}>
+          <Button variant="primary" onClick={handleAddIncome}>
             Submit
           </Button>
         </Modal.Footer>
