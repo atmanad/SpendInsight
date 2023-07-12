@@ -24,6 +24,7 @@ const Transactions = () => {
   });
   const [incomes, setIncomes] = useState([]);
   const [totalIncome, setTotalIncome] = useState(0);
+  const[monthlyBalance, setMonthlyBalance] = useState(0);
 
   const [transaction, setTransaction] = useState({
     category: '',
@@ -151,7 +152,8 @@ const Transactions = () => {
       const response = await api.Transaction.listByMonth(userId, selectedMonth);
       console.log(response);
       if (response.status === 200) {
-        setTransactions(response.data);
+        setTransactions(response.data.transactions);
+        setMonthlyBalance(response.data.savings);
       }
     } catch (error) {
       console.error("status: ", error.response.status, "error text: ", error.response.data.error);
@@ -185,8 +187,8 @@ const Transactions = () => {
     try {
       const response = await api.Income.fetch("auth0|649a8bf297157d2a7b57e432", selectedMonth);
       if (response.status === 200) {
-        console.log((response.data));
-        setIncomes(response.data);
+        setIncomes(response.data.income);
+        setMonthlyBalance(response.data.savings);
       }
     } catch (error) {
       console.log(error);
@@ -204,7 +206,6 @@ const Transactions = () => {
       amount: income.amount,
       notes: income.notes,
     };
-    console.log(newIncome)
     try {
       const response = await api.Income.insert({ userId: userId, income: newIncome });
       if (response.status === 200) {
@@ -214,7 +215,7 @@ const Transactions = () => {
           notes: '',
         });
         setShowIncomeModal(false);
-      fetchIncome();
+        fetchIncome();
       }
     } catch (error) {
       console.error("status: ", error.response.status, "error text: ", error.response.data.error);
@@ -233,9 +234,7 @@ const Transactions = () => {
       notes: transaction.notes,
       label: transaction.label
     };
-    console.log(newTransaction)
     try {
-
       const response = await api.Transaction.insert({ userId: userId, transaction: newTransaction });
       if (response.status === 200) {
         setTransaction({
@@ -266,7 +265,6 @@ const Transactions = () => {
   }
 
   const fetchCurrentMonthSummary = async (year, month) => {
-    // console.log(year, month);
     try {
       const response = await api.Expense.fetch(year, month);
       if (response.status === 200) {
@@ -294,7 +292,7 @@ const Transactions = () => {
   const calculateTotalIncome = () => {
     let tempIncome = 0;
     incomes.forEach(income => {
-      tempIncome+=income.amount;
+      tempIncome += income.amount;
     });
     setTotalIncome(tempIncome);
   }
@@ -309,9 +307,7 @@ const Transactions = () => {
   // Calculate total expense
   const calculateTotalExpense = () => {
     let tempExpense = 0;
-    transactions.forEach(t1 => {
-      tempExpense += t1.amount;
-    });
+    transactions.forEach(t1 => tempExpense += t1.amount);
     setTotalExpense(tempExpense);
     setCurrentMonthSummary(prevData => ({
       ...prevData,
@@ -323,21 +319,39 @@ const Transactions = () => {
   return (
     <div className='container transactions-container'>
       <h1>Transactions</h1>
-
-      <Row>
+      <Row className='mb-4'>
         <Col>
           <Card>
             <Card.Body>
               <Card.Title>Total Balance</Card.Title>
-              <Card.Text>{totalIncome}</Card.Text>
+              <Card.Text className={totalIncome > 0 ? 'text-success' : 'text-danger'}>{totalIncome}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
         <Col>
           <Card>
             <Card.Body>
-              <Card.Title>Total Expense of the Month</Card.Title>
-              <Card.Text>{totalExpense}</Card.Text>
+              <Card.Title>Monthly Balance</Card.Title>
+              <Card.Text className={monthlyBalance > 0 ? 'text-success' : 'text-danger'}>{monthlyBalance}</Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col>
+          <Card>
+            <Card.Body>
+              <Card.Title>Monthly Income</Card.Title>
+              <Card.Text className={totalIncome > 0 ? 'text-success' : 'text-danger'}>{totalIncome}</Card.Text>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col>
+          <Card>
+            <Card.Body>
+              <Card.Title>Monthly Expenses</Card.Title>
+              <Card.Text className={totalExpense > 0 ? 'text-success' : 'text-danger'}>{totalExpense}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
