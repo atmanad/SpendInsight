@@ -12,7 +12,7 @@ import { groupBy } from 'lodash';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
 import 'react-calendar/dist/Calendar.css';
-
+import { VictoryBar, VictoryChart, VictoryAxis, VictoryPie, VictoryTooltip, VictoryLabel, VictoryContainer } from 'victory';
 
 const Transactions = () => {
   const [showModal, setShowModal] = useState(false);
@@ -22,10 +22,10 @@ const Transactions = () => {
     amount: '',
     notes: '',
   });
-  const [incomes, setIncomes] = useState([]);
+  const [monthlyIncomes, setMonthlyIncomes] = useState([]);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
-  const[monthlyBalance, setMonthlyBalance] = useState(0);
-
+  const [monthlyBalance, setMonthlyBalance] = useState(0);
   const [transaction, setTransaction] = useState({
     category: '',
     date: new Date(),
@@ -37,7 +37,6 @@ const Transactions = () => {
   const [categories, setCategories] = useState([]);
   const [labels, setLabels] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  console.log("Selected Month", selectedMonth);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
@@ -61,18 +60,99 @@ const Transactions = () => {
   });
 
   // useEffects
+  const incomeAmounts = monthlyIncomes.map(item => item.amount);
+  const transactionAmounts = transactions.map(item => item.amount);
+  const transactionCategories = transactions.map(item => item.category);
 
+  // const data = [
+  //   { x: 'Income', y: incomeAmounts.reduce((a, b) => a + b, 0) },
+  //   { x: 'Expenses', y: transactionAmounts.reduce((a, b) => a + b, 0) },
+  // ];
+  const calculateCategoryTotals = () => {
+    const categoryTotals = {};
+    let total = 0;
+    transactions.forEach((transaction) => {
+      const { category, amount } = transaction;
+      if (category in categoryTotals) {
+        categoryTotals[category] += amount;
+      } else {
+        categoryTotals[category] = amount;
+      }
+      total += amount;
+    });
+
+    const data = Object.entries(categoryTotals).map(([category, amount]) => ({
+      x: category,
+      y: amount,
+      percent: total !== 0 ? (amount / total) * 100 : 0,
+    }));
+
+    return data;
+  };
+
+  const calculateLabelTotals = () => {
+    const labelTotals = {};
+    transactions.forEach((transaction) => {
+      const { label, amount } = transaction;
+      if (label in labelTotals) {
+        labelTotals[label] += amount;
+      } else {
+        labelTotals[label] = amount;
+      }
+    });
+    return labelTotals;
+  };
+
+  const data = calculateCategoryTotals();
+  const labelTotals = calculateLabelTotals();
+
+  const colorScale = [
+    // '#E1FFA0',
+    '#FFD4A0',
+    '#BDFFA0',
+    '#A0FFEE',
+    '#AEA7FF',
+    '#FFA7F2',
+    '#A7D6FF',
+    '#FFBFA7',
+    '#FFA7D7',
+    '#989BD1',
+    '#696B94',
+    '#1C2169',
+    '#BB5A63',
+    '#5ABB66',
+
+    // Add more colors here for additional categories
+  ];
+
+  const PieChart = ({ data }) => {
+    return (
+      <VictoryPie
+        height={280}
+        width={280}
+        innerRadius={50}
+        data={data}
+        colorScale={colorScale}
+        labelComponent={
+          <VictoryLabel
+            style={{ fontSize: 9 }} // Set the desired font size here
+            text={({ datum }) => `${datum.x}\n${datum.percent.toFixed(2)}%\n${datum.y}`}
+            renderInPortal
+          />
+        }
+      />
+    )
+  }
 
   useEffect(() => {
     fetchCategories();
     fetchLabels();
-    fetchIncome();
-    calculateTotalIncome();
+    fetchMonthlyIncome();
+    calculateMonthlyIncome();
   }, []);
 
   useEffect(() => {
     fetchTransactions(selectedMonth);
-    console.log(selectedMonth);
   }, [selectedMonth]);
 
   useEffect(() => {
@@ -80,8 +160,6 @@ const Transactions = () => {
   }, [transactions]);
 
   useEffect(() => {
-    console.log("total Expense", totalExpense);
-    console.log(currentMonthSummary.Expenses);
     if (currentMonthSummary.Month !== 0) {
       // insertMonthlySummary();
     }
@@ -97,26 +175,11 @@ const Transactions = () => {
     // Get the previous month and year
     const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
     const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-
-    console.log("current month, year", currentMonth, " ", currentYear);
-    console.log("previous month, year", previousMonth, " ", previousYear);
-
-
-    fetchPreviousMonthSummary(previousYear, previousMonth);
-    fetchCurrentMonthSummary(currentYear, currentMonth);
   }, [transactions]);
 
   useEffect(() => {
-    console.log("current Month Summary", currentMonthSummary);
-  }, [currentMonthSummary]);
-
-  useEffect(() => {
-    console.log("previous Month Summary", previousMonthSummary);
-  }, [previousMonthSummary]);
-
-  useEffect(() => {
-    calculateTotalIncome(0);
-  }, [incomes]);
+    calculateMonthlyIncome();
+  }, [monthlyIncomes]);
 
 
   // handleChange
@@ -134,10 +197,8 @@ const Transactions = () => {
     setIncome({ ...income, date: date });
   };
 
-
   const handleMonthChange = (date) => {
     setSelectedMonth(date);
-    fetchTransactions();
     toggleCalendarVisibility();
   };
 
@@ -150,13 +211,15 @@ const Transactions = () => {
   const fetchTransactions = async (selectedMonth) => {
     try {
       const response = await api.Transaction.listByMonth(userId, selectedMonth);
-      console.log(response);
       if (response.status === 200) {
         setTransactions(response.data.transactions);
         setMonthlyBalance(response.data.savings);
+        setMonthlyIncomes(response.data.incomes);
+        setTotalIncome(response.data.balance);
       }
     } catch (error) {
-      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+      console.error("status: ", error?.response?.status, "error text: ", error?.response?.data?.error);
+      console.error(error);
     }
   };
 
@@ -171,6 +234,7 @@ const Transactions = () => {
     }
   };
 
+  // Fetch all labels
   const fetchLabels = async () => {
     try {
       const response = await api.Label.list("auth0|649a8bf297157d2a7b57e432");
@@ -182,13 +246,14 @@ const Transactions = () => {
     }
   };
 
-  //fetch income
-  const fetchIncome = async () => {
+  // Fetch income
+  const fetchMonthlyIncome = async () => {
     try {
       const response = await api.Income.fetch("auth0|649a8bf297157d2a7b57e432", selectedMonth);
       if (response.status === 200) {
-        setIncomes(response.data.income);
+        setMonthlyIncomes(response.data.income);
         setMonthlyBalance(response.data.savings);
+        setTotalIncome(response.data.balance);
       }
     } catch (error) {
       console.log(error);
@@ -215,12 +280,13 @@ const Transactions = () => {
           notes: '',
         });
         setShowIncomeModal(false);
-        fetchIncome();
+        fetchMonthlyIncome();
       }
     } catch (error) {
       console.error("status: ", error.response.status, "error text: ", error.response.data.error);
     }
   };
+
   // Add Transaction
   const handleAddTransaction = async () => {
     if (!transaction.category || !transaction.amount || !transaction.label) {
@@ -252,49 +318,14 @@ const Transactions = () => {
     }
   };
 
-  // Fetch monthly summary
-  const fetchPreviousMonthSummary = async (year, month) => {
-    try {
-      const response = await api.Expense.fetch(year, month);
-      if (response.status === 200) {
-        response.data[0] !== undefined && setPreviousMonthSummary(response.data[0]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  const fetchCurrentMonthSummary = async (year, month) => {
-    try {
-      const response = await api.Expense.fetch(year, month);
-      if (response.status === 200) {
-        response.data[0] !== undefined && setCurrentMonthSummary(response.data[0]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  // Insert monthly summary
-  const insertMonthlySummary = async () => {
-    try {
-      console.log(currentMonthSummary);
-      const response = await api.Expense.insert(currentMonthSummary);
-      if (response.status === 200) {
-        console.log("inserting monthly summary", response);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   // Calculate balance
-  const calculateTotalIncome = () => {
+  const calculateMonthlyIncome = () => {
     let tempIncome = 0;
-    incomes.forEach(income => {
+    monthlyIncomes.forEach(income => {
       tempIncome += income.amount;
     });
-    setTotalIncome(tempIncome);
+    setMonthlyIncome(tempIncome);
   }
 
   // Group transactions by date
@@ -302,7 +333,6 @@ const Transactions = () => {
     format(new Date(transaction.date), 'dd MMM yy')
   );
 
-  console.log(groupedTransactions);
 
   // Calculate total expense
   const calculateTotalExpense = () => {
@@ -343,7 +373,7 @@ const Transactions = () => {
           <Card>
             <Card.Body>
               <Card.Title>Monthly Income</Card.Title>
-              <Card.Text className={totalIncome > 0 ? 'text-success' : 'text-danger'}>{totalIncome}</Card.Text>
+              <Card.Text className={monthlyIncome > 0 ? 'text-success' : 'text-danger'}>{monthlyIncome}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -351,22 +381,22 @@ const Transactions = () => {
           <Card>
             <Card.Body>
               <Card.Title>Monthly Expenses</Card.Title>
-              <Card.Text className={totalExpense > 0 ? 'text-success' : 'text-danger'}>{totalExpense}</Card.Text>
+              <Card.Text className='text-danger'>{totalExpense}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowModal(true)}>
+      <Button variant="secondary" className="my-4" onClick={() => setShowModal(true)}>
         Add Transaction
       </Button>
-      <Button variant="secondary" className="mt-4 mr-4" onClick={() => setShowIncomeModal(true)}>
+      <Button variant="secondary" className="m-4" onClick={() => setShowIncomeModal(true)}>
         Add Income
       </Button>
-
-      <Button variant="secondary" className='ml-4 mt-4' onClick={toggleCalendarVisibility}>
-        Select Month
+      <Button variant="secondary" className='my-4' onClick={toggleCalendarVisibility}>
+        {`${selectedMonth.toLocaleString('default', { month: 'long' })}  ${selectedMonth.getFullYear()}`}
       </Button>
+
       <div className="calendar">
         {isCalendarVisible && (
           <DatePicker
@@ -484,6 +514,19 @@ const Transactions = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <Row>
+        <Col>
+          <PieChart data={data} />
+        </Col>
+        <Col className='d-flex align-items-center'>
+          <div className=''>
+            {
+              Object.entries(labelTotals).map(([key, value]) => <div className="label-wise-data-row">{key} : {value}</div>)
+            }
+          </div>
+        </Col>
+      </Row>
     </div>
   );
 };

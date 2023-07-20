@@ -35,14 +35,14 @@ const Header = () => {
         }
     };
     return (
-        <Navbar bg="dark" variant="dark" expand="md">
-            <Navbar.Brand href="/">Spend Insight</Navbar.Brand>
-            <Navbar.Toggle aria-controls="navbar-nav" />
-            <Navbar.Collapse id="navbar-nav">
-                <Nav className="ml-auto">
-                    <NavBar />
-                </Nav>
-            </Navbar.Collapse>
+        <Navbar bg="dark" variant="dark" expand="md" className='nav-container'>
+                <Navbar.Brand href="/">Spend Insight</Navbar.Brand>
+                <Navbar.Toggle aria-controls="navbar-nav" />
+                <Navbar.Collapse id="navbar-nav">
+                    <Nav className="ml-auto">
+                        <NavBar />
+                    </Nav>
+                </Navbar.Collapse>
         </Navbar>
     );
 };

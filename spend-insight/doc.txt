@@ -74,3 +74,9 @@ Users:{
 
 sub 
 "auth0|649a8bf297157d2a7b57e432"
+
+total balance logic
+add expense -
+del expense +
+add income +
+del income -
