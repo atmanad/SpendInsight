@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Table } from 'react-bootstrap';
 import api from '../api/api';
 
-const LabelManagement = () => {
+const LabelManagement = ({ user }) => {
   const [labels, setLabels] = useState([]);
   const [newLabel, setNewLabel] = useState('');
 
   const fetchLabels = async () => {
     try {
-      const response = await api.Label.list("auth0|649a8bf297157d2a7b57e432");
+      const response = await api.Label.list(user?.sub);
       if (response.status === 200) {
         setLabels(response.data);
       }
@@ -28,25 +28,25 @@ const LabelManagement = () => {
         return;
       }
 
-      const response = await api.Label.insert({  userId: "auth0|649a8bf297157d2a7b57e432",labelName: newLabel });
+      const response = await api.Label.insert({ userId: user?.sub, labelName: newLabel });
       if (response.status === 200) {
         setNewLabel('');
         fetchLabels();
       }
     } catch (error) {
-      console.error("status: ",error.response.status, "error text: ", error.response.data.error);
-        }
+      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+    }
   };
 
   const handleDeleteLabel = async (labelId) => {
     try {
-      const response = await api.Label.delete({ userId: "auth0|649a8bf297157d2a7b57e432", labelId:labelId});
+      const response = await api.Label.delete({ userId: user?.sub, labelId: labelId });
       if (response.status === 200) {
         fetchLabels();
       }
     } catch (error) {
-      console.error("status: ",error.response.status, "error text: ", error.response.data.error);
-        }
+      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+    }
   };
 
   return (

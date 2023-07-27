@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, Table } from 'react-bootstrap';
 import api from '../api/api';
 
-const CategoryManagement = () => {
+const CategoryManagement = ({user}) => {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
 
   const fetchCategories = async () => {
     try {
-      const response = await api.Category.list("auth0|649a8bf297157d2a7b57e432");
+      const response = await api.Category.list(user?.sub);
       console.log(response);
       if (response.status === 200) {
         setCategories(response.data);
@@ -29,7 +29,7 @@ const CategoryManagement = () => {
         return;
       }
 
-      const response = await api.Category.insert({ userId: "auth0|649a8bf297157d2a7b57e432", categoryName: newCategory });
+      const response = await api.Category.insert({ userId:user?.sub, categoryName: newCategory });
       if (response.status === 200) {
         setNewCategory('');
         fetchCategories();
@@ -42,7 +42,7 @@ const CategoryManagement = () => {
   const handleDeleteCategory = async (categoryId) => {
     try {
       console.log(categoryId);
-      const response = await api.Category.delete({ userId: "auth0|649a8bf297157d2a7b57e432", categoryId: categoryId });
+      const response = await api.Category.delete({ userId: user?.sub, categoryId: categoryId });
       if (response.status === 200) {
         fetchCategories();
       }

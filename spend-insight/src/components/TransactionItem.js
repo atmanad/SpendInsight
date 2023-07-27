@@ -1,12 +1,9 @@
 import React from 'react';
-import Col from 'react-bootstrap/Col';
-import Row from 'react-bootstrap/Row';
 import './TransactionItem.css';
 import { RiDeleteBin2Line } from "react-icons/ri"
 import api from "../api/api"
 
-const TransactionItem = ({ category, date, amount, notes, id, fetchTransactions , label, selectedMonth}) => {
-  const userId = "auth0|649a8bf297157d2a7b57e432";
+const TransactionItem = ({ category, date, amount, notes, id, fetchTransactions , label, selectedMonth, userId}) => {
   const handleDelete = async() => {
     try {      
       const response = await api.Transaction.delete(userId, id, date);

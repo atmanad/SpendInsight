@@ -14,7 +14,8 @@ import TransactionItem from '../components/TransactionItem.js';
 import 'react-calendar/dist/Calendar.css';
 import { VictoryBar, VictoryChart, VictoryAxis, VictoryPie, VictoryTooltip, VictoryLabel, VictoryContainer } from 'victory';
 
-const Transactions = () => {
+const Transactions = ({ user }) => {
+  console.log(user);
   const [showModal, setShowModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [income, setIncome] = useState({
@@ -40,7 +41,6 @@ const Transactions = () => {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
-  const userId = "auth0|649a8bf297157d2a7b57e432";
   const [previousMonthSummary, setPreviousMonthSummary] = useState({
     ID: 0,
     Month: 0,
@@ -97,7 +97,7 @@ const Transactions = () => {
       if (label in labelTotals) {
         labelTotals[label] += amount;
       } else {
-        labelTotals[label] = amount;
+        if (label !== '') labelTotals[label] = amount;
       }
     });
     return labelTotals;
@@ -210,7 +210,8 @@ const Transactions = () => {
   //handle API
   const fetchTransactions = async (selectedMonth) => {
     try {
-      const response = await api.Transaction.listByMonth(userId, selectedMonth);
+      console.log(user?.sub);
+      const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
         setTransactions(response.data.transactions);
         setMonthlyBalance(response.data.savings);
@@ -225,7 +226,7 @@ const Transactions = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.Category.list("auth0|649a8bf297157d2a7b57e432");
+      const response = await api.Category.list(user?.sub);
       if (response.status === 200) {
         setCategories(response.data);
       }
@@ -237,26 +238,26 @@ const Transactions = () => {
   // Fetch all labels
   const fetchLabels = async () => {
     try {
-      const response = await api.Label.list("auth0|649a8bf297157d2a7b57e432");
+      const response = await api.Label.list(user?.sub);
       if (response.status === 200) {
         setLabels(response.data);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
   // Fetch income
   const fetchMonthlyIncome = async () => {
     try {
-      const response = await api.Income.fetch("auth0|649a8bf297157d2a7b57e432", selectedMonth);
+      const response = await api.Income.fetch(user?.sub, selectedMonth);
       if (response.status === 200) {
         setMonthlyIncomes(response.data.income);
         setMonthlyBalance(response.data.savings);
         setTotalIncome(response.data.balance);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -272,7 +273,7 @@ const Transactions = () => {
       notes: income.notes,
     };
     try {
-      const response = await api.Income.insert({ userId: userId, income: newIncome });
+      const response = await api.Income.insert({ userId: user.sub, income: newIncome });
       if (response.status === 200) {
         setIncome({
           date: new Date(),
@@ -287,12 +288,20 @@ const Transactions = () => {
     }
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent the default form submission behavior
+      handleAddTransaction(); // Call the handleAddTransaction function
+    }
+  };
+
   // Add Transaction
   const handleAddTransaction = async () => {
-    if (!transaction.category || !transaction.amount || !transaction.label) {
-      alert('Please select a category, a label and enter an amount');
+    if (!transaction.category || !transaction.amount) {
+      alert('Please select a category and enter an amount');
       return;
     }
+    console.log(transaction);
     const newTransaction = {
       category: transaction.category,
       date: transaction.date.toISOString().substring(0, 10),
@@ -301,7 +310,7 @@ const Transactions = () => {
       label: transaction.label
     };
     try {
-      const response = await api.Transaction.insert({ userId: userId, transaction: newTransaction });
+      const response = await api.Transaction.insert({ userId: user.sub, transaction: newTransaction });
       if (response.status === 200) {
         setTransaction({
           category: '',
@@ -424,6 +433,7 @@ const Transactions = () => {
                 fetchTransactions={fetchTransactions}
                 selectedMonth={selectedMonth}
                 date={transaction.date}
+                userId={user.sub}
               />
             ))}
           </div>
@@ -468,7 +478,7 @@ const Transactions = () => {
           <Modal.Title>Add Transaction</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onChange={handleChange}>
+          <Form onChange={handleChange} onKeyDown={handleKeyDown}>
             <Form.Group controlId="category">
               <Form.Label>Category</Form.Label>
               <Form.Control as="select" name='category' value={transaction.category} onChange={handleChange}>
@@ -477,6 +487,7 @@ const Transactions = () => {
                   <option key={category._id} value={category.categoryName}>{category.categoryName}</option>
                 ))}
               </Form.Control>
+              {categories.length === 0 && <span className='text-danger m-2'>Please create Categories in the Category section</span>}
             </Form.Group>
             <Form.Group controlId="label">
               <Form.Label>Label</Form.Label>
@@ -522,7 +533,7 @@ const Transactions = () => {
         <Col className='d-flex align-items-center'>
           <div className=''>
             {
-              Object.entries(labelTotals).map(([key, value]) => <div className="label-wise-data-row">{key} : {value}</div>)
+              Object.entries(labelTotals).map(([key, value]) => <div key={key} className="label-wise-data-row">{key} : {value}</div>)
             }
           </div>
         </Col>

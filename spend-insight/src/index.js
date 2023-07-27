@@ -6,22 +6,28 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import './index.css'
 import { Auth0Provider } from '@auth0/auth0-react';
-
+import { Provider } from 'react-redux';
+import store from './store/store';
 import App from './App';
 
-
+const domain = "spend-insight.us.auth0.com";
+const clientId = process.env.REACT_APP_CLIENT_ID;
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <Auth0Provider
-    domain="spend-insight.us.auth0.com"
-    clientId="Nirp01mxs3XbFyXa62dXg2pbveIYI9EA"
-    authorizationParams={{
-      redirect_uri: window.location.origin
-    }}
-  >
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </Auth0Provider>,
+  <Provider store={store}>
+    <Auth0Provider
+      domain={domain}
+      clientId={clientId}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: "https://spend-insight.us.auth0.com/api/v2/",
+        scope: "read:current_user update:current_user_metadata read:users	read:users_app_metadata	update:users update:current_user_metadata update:users_app_metadata	"
+      }}
+    >
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </Auth0Provider>
+  </Provider>,
 );
 

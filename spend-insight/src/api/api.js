@@ -1,8 +1,58 @@
 import axios from "axios";
 
 axios.defaults.baseURL = "http://localhost:3001/api/v1";
-console.log("from api");
 const responseBody = (response) => response;
+
+const apiUrl = "https://spend-insight.us.auth0.com/api/v2";
+
+
+const fetchRequest = (method) => async (url, token, body = null) => {
+    console.log(body);
+    const requestOptions = {
+        method,
+        headers: {
+            "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`
+        },
+        body: body ? JSON.stringify(body) : null,
+    };
+
+    const response = await fetch(`${apiUrl}${url}`, requestOptions);
+    if (!response.ok) {
+        console.error(response.status, response.statusText);
+    }
+    return await response.json();
+};
+
+const auth0Requests = {
+    get: fetchRequest("GET"),
+    post: fetchRequest("POST"),
+    put: fetchRequest("PUT"),
+    del: fetchRequest("DELETE"),
+    patch: fetchRequest("PATCH"),
+};
+
+var options = {
+    method: 'POST',
+    url: 'https://spend-insight.us.auth0.com/oauth/token',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', 'Access-Control-Allow-Origin': '*' },
+
+    data: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: process.env.REACT_APP_CLIENT_ID,
+        client_secret: process.env.REACT_APP_CLIENT_SECRET,
+        audience: 'https://spend-insight.us.auth0.com/api/v2/'
+    })
+};
+
+const fetchManagementApiToken = async () => {
+    const response = await fetch('https://spend-insight.us.auth0.com/oauth/token', options);
+    if (!response.ok) {
+        console.error(response.status, response.statusText);
+    }
+
+    return response.json();
+}
 
 const requests = {
     get: (url) => axios.get(url).then(responseBody),
@@ -16,11 +66,11 @@ const Transaction = {
     list: (userId, selectedMonth) => requests.get(`/transactions?userId=${userId}&month=${selectedMonth}`),
     insert: (data) => requests.post("/transactions", data),
     listByMonth: (userId, selectedMonth) => requests.get(`/transactions/?userId=${userId}&selectedMonth=${selectedMonth}`),
-    delete: (userId, transactionId,date) => requests.del(`/transactions?userId=${userId}&transactionId=${transactionId}&date=${date}`)
+    delete: (userId, transactionId, date) => requests.del(`/transactions?userId=${userId}&transactionId=${transactionId}&date=${date}`)
 };
 
 const Category = {
-    list: (userId) => requests.get(`/categories/${userId}` ),
+    list: (userId) => requests.get(`/categories/${userId}`),
     insert: (data) => requests.post("/categories", data),
     delete: (data) => requests.del(`/categories/${data.userId}/${data.categoryId}`),
 }
@@ -38,9 +88,14 @@ const Expense = {
 }
 
 const Income = {
-    fetch: (userId, date) => requests.get(`/income?userId=${userId}&date=${date}` ),
+    fetch: (userId, date) => requests.get(`/income?userId=${userId}&date=${date}`),
     insert: (data) => requests.post("/income", data),
     delete: (data) => requests.del(`/income/${data.userId}/${data.categoryId}`),
+}
+
+const User = {
+    fetch: (userId, token) => auth0Requests.get(`/users/${userId}`, token),
+    updateName: (userId, token, body) => auth0Requests.patch(`/users/${userId}`, token, body)
 }
 
 const api = {
@@ -48,7 +103,9 @@ const api = {
     Category,
     Label,
     Expense,
-    Income
+    Income,
+    User,
+    fetchManagementApiToken
 };
 
 export default api;

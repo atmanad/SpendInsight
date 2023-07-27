@@ -17,3 +17,6 @@ P {
     margin-bottom: 2px;
     font-weight: bold;
   }
+  .rounded-circle{
+    max-height: 40px;
+  }
