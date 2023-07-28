@@ -1,6 +1,7 @@
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:3001/api/v1";
+// axios.defaults.baseURL = "http://localhost:3001/api/v1";
+axios.defaults.baseURL = "https://spend-insight-server.vercel.app/api/v1"
 const responseBody = (response) => response;
 
 const apiUrl = "https://spend-insight.us.auth0.com/api/v2";
