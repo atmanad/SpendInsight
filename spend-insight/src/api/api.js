@@ -36,14 +36,10 @@ const auth0Requests = {
 var options = {
     method: 'POST',
     url: 'https://spend-insight.us.auth0.com/oauth/token',
-    headers: { 'content-type': 'application/x-www-form-urlencoded', 'Access-Control-Allow-Origin': '*' },
+    headers: { 'content-type': 'application/json' },
 
-    data: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: process.env.REACT_APP_CLIENT_ID,
-        client_secret: process.env.REACT_APP_CLIENT_SECRET,
-        audience: 'https://spend-insight.us.auth0.com/api/v2/'
-    })
+    body: { "client_id": "Nirp01mxs3XbFyXa62dXg2pbveI9EA", "client_secret": "YTpNRJz5_ayC1-AwB8NiFK0PGqeAIYP8pWkY4r9PjZmn7nMPAmtWXmeWTS4XCz", "audience": "https://spend-insight.us.auth0.com/api/v2/", "grant_type": "client_credentials" }
+
 };
 
 const fetchManagementApiToken = async () => {

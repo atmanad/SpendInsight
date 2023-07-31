@@ -1,60 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, {  useState } from 'react';
 import { Button, Modal, Form } from 'react-bootstrap';
+import {RiEdit2Line } from "react-icons/ri"
 import api from '../api/api';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { authActions } from '../store/authSlice';
 
 const UserDetail = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState('John Doe');
-  const [userData, setUserData] = useState({
-    name: null, email: null
-  });
+  const [name, setName] = useState('');
+  const dispatch = useDispatch();
   const userSub = useSelector(state => state.auth.user);
   console.log(userSub);
   const accessToken = useSelector(state => state.auth.token);
   const userMetadata = useSelector(state => state.auth.userMetadata);
   console.log(accessToken);
-  // const getUserMetadata = async () => {
-  //   const response = await api.User.fetch(userSub, accessToken);
-  //   setUserData(response);
-  // }
-
-  // useEffect(() => {
-  //   getUserMetadata();
-  // }, []);
-
-
-
-  // const user = {
-  //   user_id: 'auth0|507f1f77bcf86cd799439020',
-  //   email: 'john.doe@gmail.com',
-  //   email_verified: false,
-  //   username: 'johndoe',
-  //   phone_number: '+199999999999999',
-  //   phone_verified: false,
-  //   created_at: '',
-  //   updated_at: '',
-  //   identities: [
-  //     {
-  //       connection: 'Initial-Connection',
-  //       user_id: '507f1f77bcf86cd799439020',
-  //       provider: 'auth0',
-  //       isSocial: false,
-  //     },
-  //   ],
-  //   app_metadata: {},
-  //   user_metadata: {},
-  //   picture: '',
-  //   name: '',
-  //   nickname: '',
-  //   multifactor: [''],
-  //   last_ip: '',
-  //   last_login: '',
-  //   logins_count: 0,
-  //   blocked: false,
-  //   given_name: '',
-  //   family_name: '',
-  // };
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -70,8 +29,12 @@ const UserDetail = ({ user }) => {
 
   const handleSave = async () => {
     try {
-      const response = await api.User.updateName(userMetadata.user_id, accessToken, { 'name': name });
-      console.log(response);
+      const response = await api.User.updateName(userMetadata.user_id, accessToken, {
+        "user_metadata": { "name": name }
+      });
+      dispatch(authActions.updateMetadata({
+        index:"user_metadata", name:response?.user_metadata.name
+      }))
     } catch (error) {
       console.error(error)
     }
@@ -81,21 +44,18 @@ const UserDetail = ({ user }) => {
 
   return (
     <div className="container mt-4">
-      <h1>User Details</h1>
-      <div className='row'>
-        <div className='col-9'>
-          <div className="card">
+      <h2>User Details</h2>
+      <div className='row user-details-row'>
+        <div className='col-9 user-details-col-left'>
+          <div className="card user-details-card">
             <div className="card-body">
-              <h5 className="card-title">Name: {userMetadata?.name}</h5>
-              <p className="card-text">Email: {userMetadata?.email}</p>
-              <Button variant="primary" onClick={handleOpenModal}>
-                Edit Name
-              </Button>
+              <h5 className="card-title">Name: {userMetadata?.user_metadata?.name}<span className='user-details-edit-button' onClick={handleOpenModal}><RiEdit2Line/></span></h5>
+              <h5 className="card-text">Email: {userMetadata?.email}</h5>
             </div>
           </div>
         </div>
-        <div className='col-3'>
-          <img src={user?.picture} className='img-fluid' />
+        <div className='col-3 user-details-col-right'>
+          <img src={userMetadata?.picture} className='img-fluid' alt='user'/>
         </div>
       </div>
 

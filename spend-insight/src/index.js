@@ -21,7 +21,7 @@ root.render(
       authorizationParams={{
         redirect_uri: window.location.origin,
         audience: "https://spend-insight.us.auth0.com/api/v2/",
-        scope: "read:current_user update:current_user_metadata read:users	read:users_app_metadata	update:users update:current_user_metadata update:users_app_metadata	"
+        scope: "read:current_user update:current_user_metadata read:users	read:users_app_metadata	update:users update:users_app_metadata	"
       }}
     >
       <BrowserRouter>

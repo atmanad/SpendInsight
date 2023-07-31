@@ -4,32 +4,31 @@
   padding: 10px;
   margin-bottom: 2px;
 }
-.transactions-group{
-padding: 10px;
+
+.transactions-group {
+  padding: 10px;
 }
+
 .transaction-item-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* justify-content:space-between; */
 }
 
-.transaction-item-category {
+.transaction-item-category,.transaction-item-amount {
   font-weight: bold;
 }
 
 .transaction-item-category,
-.transaction-item-date,
-.transaction-item-notes {
-  flex-basis: 25%;
-}
-
+.transaction-item-label,
+.transaction-item-notes,
+.transaction-item-button,
 .transaction-item-amount {
-  flex-basis: 15%;
-  text-align: right;
-  font-weight: bold;
+  flex-basis: 20%;
+  flex-grow: 0;
 }
 
-.delete-button {
+.transaction-item-button {
   color: red;
   border-style: none;
   font-size: 20px;
@@ -37,10 +36,6 @@ padding: 10px;
 
 .transaction-item-notes {
   color: #888888;
-}
-
-.add-transaction-button {
-  margin-bottom: 20px;
 }
 
 .modal-title {

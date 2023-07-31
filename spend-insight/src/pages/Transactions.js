@@ -3,16 +3,19 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
+import Spinner from 'react-bootstrap/Spinner';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { groupBy } from 'lodash';
+import { Ri24HoursFill, RiArrowRightLine, RiArrowLeftLine, RiArrowLeftFill, RiArrowRightFill, RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
 import 'react-calendar/dist/Calendar.css';
 import { VictoryBar, VictoryChart, VictoryAxis, VictoryPie, VictoryTooltip, VictoryLabel, VictoryContainer } from 'victory';
+
 
 const Transactions = ({ user }) => {
   console.log(user);
@@ -38,17 +41,14 @@ const Transactions = ({ user }) => {
   const [categories, setCategories] = useState([]);
   const [labels, setLabels] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  console.log(selectedMonth);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
   const [balance, setBalance] = useState(0);
-  const [previousMonthSummary, setPreviousMonthSummary] = useState({
-    ID: 0,
-    Month: 0,
-    Year: 0,
-    Balance: 0,
-    Income: 0,
-    Expenses: 0
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+
 
   const [currentMonthSummary, setCurrentMonthSummary] = useState({
     ID: 0,
@@ -59,7 +59,6 @@ const Transactions = ({ user }) => {
     Expenses: 0
   });
 
-  // useEffects
   const incomeAmounts = monthlyIncomes.map(item => item.amount);
   const transactionAmounts = transactions.map(item => item.amount);
   const transactionCategories = transactions.map(item => item.category);
@@ -152,8 +151,11 @@ const Transactions = ({ user }) => {
   }, []);
 
   useEffect(() => {
-    fetchTransactions(selectedMonth);
-  }, [selectedMonth]);
+    if (user !== undefined) {
+      console.log(user ? true : false);
+      fetchTransactions(selectedMonth);
+    }
+  }, [selectedMonth, user]);
 
   useEffect(() => {
     calculateTotalExpense();
@@ -209,18 +211,23 @@ const Transactions = ({ user }) => {
 
   //handle API
   const fetchTransactions = async (selectedMonth) => {
+    console.log("fetch transactions called"); 
+    setIsLoading(true);
     try {
       console.log(user?.sub);
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
+      console.log(response);   
       if (response.status === 200) {
         setTransactions(response.data.transactions);
         setMonthlyBalance(response.data.savings);
         setMonthlyIncomes(response.data.incomes);
         setTotalIncome(response.data.balance);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("status: ", error?.response?.status, "error text: ", error?.response?.data?.error);
       console.error(error);
+      setIsLoading(false);
     }
   };
 
@@ -267,6 +274,7 @@ const Transactions = ({ user }) => {
       alert('Please enter an amount and note');
       return;
     }
+    setSubmitting(true);
     const newIncome = {
       date: income.date.toISOString().substring(0, 10),
       amount: income.amount,
@@ -282,9 +290,11 @@ const Transactions = ({ user }) => {
         });
         setShowIncomeModal(false);
         fetchMonthlyIncome();
+        setSubmitting(false);
       }
     } catch (error) {
       console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+      setSubmitting(false);
     }
   };
 
@@ -301,7 +311,7 @@ const Transactions = ({ user }) => {
       alert('Please select a category and enter an amount');
       return;
     }
-    console.log(transaction);
+    setSubmitting(true);
     const newTransaction = {
       category: transaction.category,
       date: transaction.date.toISOString().substring(0, 10),
@@ -321,9 +331,11 @@ const Transactions = ({ user }) => {
         });
         setShowModal(false);
         fetchTransactions(selectedMonth);
+        setSubmitting(false);
       }
     } catch (error) {
       console.error("status: ", error.response.status, "error text: ", error.response.data.error);
+      setSubmitting(false);
     }
   };
 
@@ -352,6 +364,20 @@ const Transactions = ({ user }) => {
       ...prevData,
       Expenses: tempExpense
     }));
+  }
+
+  const goToNextMonth = () => {
+    const nextMonth = new Date(selectedMonth);
+    nextMonth.setDate(1);
+    nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
+    setSelectedMonth(nextMonth);
+  }
+
+  const goToPreviousMonth = () => {
+    const previousMonth = new Date(selectedMonth);
+    previousMonth.setDate(1);
+    previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
+    setSelectedMonth(previousMonth);
   }
 
 
@@ -402,8 +428,14 @@ const Transactions = ({ user }) => {
       <Button variant="secondary" className="m-4" onClick={() => setShowIncomeModal(true)}>
         Add Income
       </Button>
+      <Button className='date-button-left' onClick={goToPreviousMonth}>
+        <RiArrowLeftFill />
+      </Button>
       <Button variant="secondary" className='my-4' onClick={toggleCalendarVisibility}>
         {`${selectedMonth.toLocaleString('default', { month: 'long' })}  ${selectedMonth.getFullYear()}`}
+      </Button>
+      <Button className='date-button-right' onClick={goToNextMonth}>
+        <RiArrowRightFill />
       </Button>
 
       <div className="calendar">
@@ -418,27 +450,35 @@ const Transactions = ({ user }) => {
         )}
       </div>
 
-      <div>
-        {Object.keys(groupedTransactions).map((date) => (
-          <div key={date} className="transactions-group">
-            <h6>{date}</h6>
-            {groupedTransactions[date].map((transaction) => (
-              <TransactionItem
-                key={transaction._id}
-                category={transaction.category}
-                label={transaction.label}
-                amount={transaction.amount}
-                notes={transaction.notes}
-                id={transaction._id}
-                fetchTransactions={fetchTransactions}
-                selectedMonth={selectedMonth}
-                date={transaction.date}
-                userId={user.sub}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
+      {isLoading ?
+        <div className='text-center m-5'>
+          <Spinner animation="border" role="status" variant='secondary'>
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div> :
+
+        <div>
+          {Object.keys(groupedTransactions).map((date) => (
+            <div key={date} className="transactions-group">
+              <h6>{date}</h6>
+              {groupedTransactions[date].map((transaction) => (
+                <TransactionItem
+                  key={transaction._id}
+                  category={transaction.category}
+                  label={transaction.label}
+                  amount={transaction.amount}
+                  notes={transaction.notes}
+                  id={transaction._id}
+                  fetchTransactions={fetchTransactions}
+                  selectedMonth={selectedMonth}
+                  date={transaction.date}
+                  userId={user.sub}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      }
       {/* Income Modal */}
       <Modal show={showIncomeModal} onHide={() => setShowIncomeModal(false)}>
         <Modal.Header closeButton>
@@ -467,9 +507,23 @@ const Transactions = ({ user }) => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddIncome}>
-            Submit
-          </Button>
+          {
+            submitting ? <Button variant="primary" disabled>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className='mr-2'
+              />
+              Adding Income..
+            </Button> :
+              <Button variant="primary" onClick={handleAddIncome}>
+                Submit
+              </Button>
+          }
+
         </Modal.Footer>
       </Modal>
       {/* Add Transaction Modal */}
@@ -520,9 +574,22 @@ const Transactions = ({ user }) => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleAddTransaction}>
-            Submit
-          </Button>
+          {
+            submitting ? <Button variant="primary" disabled>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className='mr-2'
+              />
+              Adding Transaction..
+            </Button> :
+              <Button variant="primary" onClick={handleAddTransaction}>
+                Submit
+              </Button>
+          }
         </Modal.Footer>
       </Modal>
 

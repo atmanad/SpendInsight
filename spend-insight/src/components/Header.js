@@ -31,7 +31,7 @@ const Header = ({ isAuthenticated, user }) => {
                     scope: "read:current_user",
                 },
             });
-            console.log(accessToken);
+            // console.log(accessToken);
             dispatch(authActions.addToken(accessToken));
 
             const userDetailsByIdUrl = `https://${domain}/api/v2/users/${user.sub}`;
@@ -43,7 +43,8 @@ const Header = ({ isAuthenticated, user }) => {
             });
 
             const res = await metadataResponse.json();
-            console.log(res);
+            // console.log(res);
+            // dispatch(authActions.addUser(res));
             dispatch(authActions.addMetadata(res));
 
             // setUserMetadata(user_metadata);  
