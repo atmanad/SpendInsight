@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// axios.defaults.baseURL = "http://localhost:3001/api/v1";
-axios.defaults.baseURL = "https://spend-insight-server.vercel.app/api/v1"
+axios.defaults.baseURL = "http://localhost:3001/api/v1";
+// axios.defaults.baseURL = "https://spend-insight-server.vercel.app/api/v1"
 const responseBody = (response) => response;
 
 const apiUrl = "https://spend-insight.us.auth0.com/api/v2";
@@ -87,7 +87,7 @@ const Expense = {
 const Income = {
     fetch: (userId, date) => requests.get(`/income?userId=${userId}&date=${date}`),
     insert: (data) => requests.post("/income", data),
-    delete: (data) => requests.del(`/income/${data.userId}/${data.categoryId}`),
+    delete: (userId, incomeId, date) => requests.del(`/income/?userId=${userId}&incomeId=${incomeId}&date=${date}`),
 }
 
 const User = {

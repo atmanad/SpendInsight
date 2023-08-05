@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from './store/authSlice';
 import api from './api/api';
+import 'react-loading-skeleton/dist/skeleton.css'
 
 
 const App = () => {

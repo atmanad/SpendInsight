@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './TransactionItem.css';
+import './components.css';
 import { RiDeleteBin2Line } from "react-icons/ri"
 import Modal from 'react-bootstrap/Modal';
 import Card from 'react-bootstrap/Card';
@@ -61,17 +61,14 @@ const TransactionItem = ({ category, date, amount, notes, id, fetchTransactions,
           </Card>
         </Modal.Body>
       </Modal>
-      <div className="transaction-item">
-        <div className="transaction-item-row">
-          <div className="transaction-item-category">{category}</div>
-          <div className="transaction-item-label">{label}</div>
-          {/* <div className="transaction-item-date">{date}</div> */}
-          <div className="transaction-item-notes">{notes}</div>
-          <div className="transaction-item-amount">{amount}</div>
-          <button className="transaction-item-button pb-1" onClick={() => setShowDeleteModal(true)}>
+        <div className="item-row">
+          <div className="item-category">{category}</div>
+          <div className="item-label">{label || "---"}</div>
+          <div className="item-notes">{notes || "---"}</div>
+          <div className="transaction-item-amount">-{amount}</div>
+          <button className="item-delete-button pb-1" onClick={() => setShowDeleteModal(true)}>
             <RiDeleteBin2Line />
           </button>
-        </div>
       </div>
     </>
   );

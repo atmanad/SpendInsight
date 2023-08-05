@@ -10,21 +10,23 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { groupBy } from 'lodash';
-import { Ri24HoursFill, RiArrowRightLine, RiArrowLeftLine, RiArrowLeftFill, RiArrowRightFill, RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
 import 'react-calendar/dist/Calendar.css';
-import { VictoryBar, VictoryChart, VictoryAxis, VictoryPie, VictoryTooltip, VictoryLabel, VictoryContainer } from 'victory';
+import { VictoryPie, VictoryLabel } from 'victory';
+import Skeleton from 'react-loading-skeleton';
+import IncomeItem from '../components/IncomeItem';
 
 
 const Transactions = ({ user }) => {
-  console.log(user);
   const [showModal, setShowModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [income, setIncome] = useState({
     date: new Date(),
     amount: '',
     notes: '',
+    category: ''
   });
   const [monthlyIncomes, setMonthlyIncomes] = useState([]);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
@@ -41,32 +43,31 @@ const Transactions = ({ user }) => {
   const [categories, setCategories] = useState([]);
   const [labels, setLabels] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  console.log(selectedMonth);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
-  const [balance, setBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [balance, setBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [groupedItems, setGroupedItems] = useState({});
+  const [groupedSortedTransactions, setGroupedSortedTransactions] = useState({});
+  const [groupedSortedIncomes, setGroupedSortedIncomes] = useState({});
+  console.log(groupedSortedIncomes);
 
 
 
-  const [currentMonthSummary, setCurrentMonthSummary] = useState({
-    ID: 0,
-    Month: 0,
-    Year: 0,
-    Balance: 0,
-    Income: 0,
-    Expenses: 0
-  });
+  // const [currentMonthSummary, setCurrentMonthSummary] = useState({
+  //   ID: 0,
+  //   Month: 0,
+  //   Year: 0,
+  //   Balance: 0,
+  //   Income: 0,
+  //   Expenses: 0
+  // });
 
   const incomeAmounts = monthlyIncomes.map(item => item.amount);
   const transactionAmounts = transactions.map(item => item.amount);
   const transactionCategories = transactions.map(item => item.category);
 
-  // const data = [
-  //   { x: 'Income', y: incomeAmounts.reduce((a, b) => a + b, 0) },
-  //   { x: 'Expenses', y: transactionAmounts.reduce((a, b) => a + b, 0) },
-  // ];
   const calculateCategoryTotals = () => {
     const categoryTotals = {};
     let total = 0;
@@ -106,7 +107,6 @@ const Transactions = ({ user }) => {
   const labelTotals = calculateLabelTotals();
 
   const colorScale = [
-    // '#E1FFA0',
     '#FFD4A0',
     '#BDFFA0',
     '#A0FFEE',
@@ -146,7 +146,6 @@ const Transactions = ({ user }) => {
   useEffect(() => {
     fetchCategories();
     fetchLabels();
-    fetchMonthlyIncome();
     calculateMonthlyIncome();
   }, []);
 
@@ -154,6 +153,7 @@ const Transactions = ({ user }) => {
     if (user !== undefined) {
       console.log(user ? true : false);
       fetchTransactions(selectedMonth);
+      fetchMonthlyIncome(selectedMonth);
     }
   }, [selectedMonth, user]);
 
@@ -161,11 +161,11 @@ const Transactions = ({ user }) => {
     calculateTotalExpense();
   }, [transactions]);
 
-  useEffect(() => {
-    if (currentMonthSummary.Month !== 0) {
-      // insertMonthlySummary();
-    }
-  }, [currentMonthSummary.Expenses]);
+  // useEffect(() => {
+  //   if (currentMonthSummary.Month !== 0) {
+  //     // insertMonthlySummary();
+  //   }
+  // }, [currentMonthSummary.Expenses]);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -182,6 +182,10 @@ const Transactions = ({ user }) => {
   useEffect(() => {
     calculateMonthlyIncome();
   }, [monthlyIncomes]);
+
+  // useEffect(() => {
+  //   groupByDate();
+  // }, [monthlyIncomes, transactions]);
 
 
   // handleChange
@@ -211,16 +215,17 @@ const Transactions = ({ user }) => {
 
   //handle API
   const fetchTransactions = async (selectedMonth) => {
-    console.log("fetch transactions called"); 
+    console.log("fetch transactions called");
     setIsLoading(true);
     try {
       console.log(user?.sub);
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
-      console.log(response);   
       if (response.status === 200) {
         setTransactions(response.data.transactions);
+        groupAndSortByDate(response.data.transactions, setGroupedSortedTransactions);
         setMonthlyBalance(response.data.savings);
         setMonthlyIncomes(response.data.incomes);
+        groupAndSortByDate(response.data.incomes, setGroupedSortedIncomes);
         setTotalIncome(response.data.balance);
         setIsLoading(false);
       }
@@ -255,11 +260,12 @@ const Transactions = ({ user }) => {
   };
 
   // Fetch income
-  const fetchMonthlyIncome = async () => {
+  const fetchMonthlyIncome = async (selectedMonth) => {
     try {
       const response = await api.Income.fetch(user?.sub, selectedMonth);
       if (response.status === 200) {
         setMonthlyIncomes(response.data.income);
+        groupAndSortByDate(response.data.income, setGroupedSortedIncomes);
         setMonthlyBalance(response.data.savings);
         setTotalIncome(response.data.balance);
       }
@@ -270,7 +276,7 @@ const Transactions = ({ user }) => {
 
   // Add Income
   const handleAddIncome = async () => {
-    if (!income.amount || !income.notes) {
+    if (!income.amount || !income.category) {
       alert('Please enter an amount and note');
       return;
     }
@@ -279,6 +285,7 @@ const Transactions = ({ user }) => {
       date: income.date.toISOString().substring(0, 10),
       amount: income.amount,
       notes: income.notes,
+      category: income.category
     };
     try {
       const response = await api.Income.insert({ userId: user.sub, income: newIncome });
@@ -287,9 +294,10 @@ const Transactions = ({ user }) => {
           date: new Date(),
           amount: '',
           notes: '',
+          category: ''
         });
         setShowIncomeModal(false);
-        fetchMonthlyIncome();
+        fetchMonthlyIncome(selectedMonth);
         setSubmitting(false);
       }
     } catch (error) {
@@ -349,21 +357,37 @@ const Transactions = ({ user }) => {
     setMonthlyIncome(tempIncome);
   }
 
-  // Group transactions by date
-  const groupedTransactions = groupBy(transactions, (transaction) =>
-    format(new Date(transaction.date), 'dd MMM yy')
-  );
+  // Group transactions by date and sort
+  const groupedTransactions = groupBy(transactions, (transaction) => format(new Date(transaction.date), 'dd MMM yy'));
+  const sortedGroupedTransactions = Object.entries(groupedTransactions).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  const sortedGroupedTransactionsObject = Object.fromEntries(sortedGroupedTransactions);
 
+  const groupedIncomes = groupBy(monthlyIncomes, (income) => format(new Date(income.date), 'dd MMM yy'));
+  const sortedGroupedIncomes = Object.entries(groupedIncomes).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  const sortedGroupedIncomesObject = Object.fromEntries(sortedGroupedIncomes);
+
+  const groupAndSortByDate = (itemArray, setItemArray) => {
+    const groupedItemArray = groupBy(itemArray, (item) => format(new Date(item.date), 'dd MMM yy'));
+    const sortedArray = Object.entries(groupedItemArray).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    const sortedArrayObject = Object.fromEntries(sortedArray);
+    setItemArray(sortedArrayObject);
+  }
+
+  const groupByDate = () => {
+    const combinedArray = [...transactions, ...monthlyIncomes];
+    const _groupedItems = groupBy(combinedArray, (item) => format(new Date(item.date), 'dd MMM yy'));
+    setGroupedItems(_groupedItems);
+  }
 
   // Calculate total expense
   const calculateTotalExpense = () => {
     let tempExpense = 0;
     transactions.forEach(t1 => tempExpense += t1.amount);
     setTotalExpense(tempExpense);
-    setCurrentMonthSummary(prevData => ({
-      ...prevData,
-      Expenses: tempExpense
-    }));
+    // setCurrentMonthSummary(prevData => ({
+    //   ...prevData,
+    //   Expenses: tempExpense
+    // }));
   }
 
   const goToNextMonth = () => {
@@ -422,22 +446,27 @@ const Transactions = ({ user }) => {
         </Col>
       </Row>
 
-      <Button variant="secondary" className="my-4" onClick={() => setShowModal(true)}>
-        Add Transaction
-      </Button>
-      <Button variant="secondary" className="m-4" onClick={() => setShowIncomeModal(true)}>
-        Add Income
-      </Button>
-      <Button className='date-button-left' onClick={goToPreviousMonth}>
-        <RiArrowLeftFill />
-      </Button>
-      <Button variant="secondary" className='my-4' onClick={toggleCalendarVisibility}>
-        {`${selectedMonth.toLocaleString('default', { month: 'long' })}  ${selectedMonth.getFullYear()}`}
-      </Button>
-      <Button className='date-button-right' onClick={goToNextMonth}>
-        <RiArrowRightFill />
-      </Button>
-
+      <div className='button-container'>
+        <div className='button-container-left'>
+          <Button variant="secondary" className="my-4" onClick={() => setShowModal(true)}>
+            Add Transaction
+          </Button>
+          <Button variant="secondary" className="m-4" onClick={() => setShowIncomeModal(true)}>
+            Add Income
+          </Button>
+        </div>
+        <div>
+          <Button className='date-button-left' onClick={goToPreviousMonth}>
+            <RiArrowLeftFill />
+          </Button>
+          <Button variant="secondary" className='my-4' onClick={toggleCalendarVisibility}>
+            {`${selectedMonth.toLocaleString('default', { month: 'long' })}  ${selectedMonth.getFullYear()}`}
+          </Button>
+          <Button className='date-button-right' onClick={goToNextMonth}>
+            <RiArrowRightFill />
+          </Button>
+        </div>
+      </div>
       <div className="calendar">
         {isCalendarVisible && (
           <DatePicker
@@ -450,34 +479,57 @@ const Transactions = ({ user }) => {
         )}
       </div>
 
-      {isLoading ?
-        <div className='text-center m-5'>
-          <Spinner animation="border" role="status" variant='secondary'>
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div> :
-
-        <div>
-          {Object.keys(groupedTransactions).map((date) => (
-            <div key={date} className="transactions-group">
-              <h6>{date}</h6>
-              {groupedTransactions[date].map((transaction) => (
-                <TransactionItem
-                  key={transaction._id}
-                  category={transaction.category}
-                  label={transaction.label}
-                  amount={transaction.amount}
-                  notes={transaction.notes}
-                  id={transaction._id}
-                  fetchTransactions={fetchTransactions}
+      <div>
+        {Object.keys(groupedSortedIncomes).map((date) => (
+          <div key={date} className='items-group'>
+            {
+              groupedSortedIncomes[date].map((income) => (
+                <IncomeItem
+                  key={income._id}
+                  date={income.date}
+                  amount={income.amount}
+                  notes={income.notes || "---"}
+                  id={income._id}
+                  userId={user?.sub}
+                  category={income.category}
+                  fetchMonthlyIncome={fetchMonthlyIncome}
                   selectedMonth={selectedMonth}
-                  date={transaction.date}
-                  userId={user.sub}
                 />
-              ))}
-            </div>
-          ))}
-        </div>
+              ))
+            }
+          </div>
+        ))}
+      </div>
+
+
+      {
+        isLoading ?
+          <div className='items-group'>
+            <Skeleton className='skeleton-transaction-date ' />
+            <Skeleton className='skeleton-transaction-item' count={3} />
+          </div>
+          :
+          <div>
+            {Object.keys(groupedSortedTransactions).map((date) => (
+              <div key={date} className="items-group">
+                <h6>{date}</h6>
+                {groupedSortedTransactions[date].map((transaction) => (
+                  <TransactionItem
+                    key={transaction._id}
+                    category={transaction.category}
+                    label={transaction.label}
+                    amount={transaction.amount}
+                    notes={transaction.notes}
+                    id={transaction._id}
+                    fetchTransactions={fetchTransactions}
+                    selectedMonth={selectedMonth}
+                    date={transaction.date}
+                    userId={user.sub}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
       }
       {/* Income Modal */}
       <Modal show={showIncomeModal} onHide={() => setShowIncomeModal(false)}>
@@ -488,13 +540,21 @@ const Transactions = ({ user }) => {
           <Form onChange={handleIncomeChange}>
             <Form.Group controlId="date">
               <Form.Label>Date</Form.Label>
-              <br />
               <DatePicker selected={income.date} name='date' dateFormat="dd/MM/yyyy" onChange={handleIncomeDateChange} className="form-control" />
             </Form.Group>
 
             <Form.Group controlId="amount">
               <Form.Label>Amount</Form.Label>
               <Form.Control type="number" name='amount' />
+            </Form.Group>
+
+            <Form.Group controlId="category">
+              <Form.Label>Category</Form.Label>
+              <Form.Control as="select" name='category' value={income.category} onChange={handleChange}>
+                <option value="">Select Category</option>
+                <option value="Salary">Salary</option>
+                <option value="Other">Other</option>
+              </Form.Control>
             </Form.Group>
 
             <Form.Group controlId="notes">
@@ -504,7 +564,7 @@ const Transactions = ({ user }) => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Button variant="secondary" onClick={() => setShowIncomeModal(false)}>
             Cancel
           </Button>
           {
