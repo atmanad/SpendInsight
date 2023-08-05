@@ -446,16 +446,16 @@ const Transactions = ({ user }) => {
         </Col>
       </Row>
 
-      <div className='button-container'>
-        <div className='button-container-left'>
+      <div className='btn-container'>
+        <div className='btn-container-left'>
           <Button variant="secondary" className="my-4" onClick={() => setShowModal(true)}>
             Add Transaction
           </Button>
-          <Button variant="secondary" className="m-4" onClick={() => setShowIncomeModal(true)}>
+          <Button variant="secondary" className="my-4" onClick={() => setShowIncomeModal(true)}>
             Add Income
           </Button>
         </div>
-        <div>
+        <div className='btn-container-right'>
           <Button className='date-button-left' onClick={goToPreviousMonth}>
             <RiArrowLeftFill />
           </Button>

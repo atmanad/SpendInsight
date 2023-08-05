@@ -71,10 +71,29 @@ P {
   height: 47px;
 }
 
+.btn-container-left :nth-child(2){
+  margin-left: 10px;
+}
 
 @media(min-width:576px) {
-  .button-container {
+  .btn-container {
     display: flex;
     justify-content: space-between;
+  }
+}
+
+@media(max-width:576px) {
+  .btn-container-left {
+    display: flex;
+    justify-content: space-between;
+  }
+  .btn-container-right{
+    text-align: center;
+  }
+  div.card-title.h5{
+    font-size: 16px;
+  }
+  div.card-body{
+    padding: 7px;
   }
 }
