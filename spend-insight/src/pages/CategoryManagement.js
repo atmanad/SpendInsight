@@ -75,7 +75,7 @@ const CategoryManagement = ({ user }) => {
               onChange={(e) => setNewCategory(e.target.value)}
             />
           </div>
-          <div className='col'>
+          <div className='col-auto'>
             {
               buttonLoading ?
                 <Button variant="primary" disabled>

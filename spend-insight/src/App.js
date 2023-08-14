@@ -12,6 +12,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from './store/authSlice';
 import api from './api/api';
 import 'react-loading-skeleton/dist/skeleton.css'
+import Dashboard from './pages/Dashboard';
 
 
 const App = () => {
@@ -39,11 +40,12 @@ const App = () => {
     <div>
       <Header isAuthenticated={isAuthenticated} user={user} />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Dashboard user={user} />} />
         <Route path="/transactions" element={<Transactions user={user} />} />
         <Route path="/user" element={<UserDetails/>} />
         <Route exact path="/categories" element={<CategoryManagement user={user} />} />
         <Route exact path="/labels" element={<LabelManagement user={user} />} />
+        <Route exact path="/dashboard" element={<Dashboard user={user} />} />
       </Routes>
       <Footer />
     </div>

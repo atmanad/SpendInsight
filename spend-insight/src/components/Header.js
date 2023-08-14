@@ -5,7 +5,7 @@ import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';
 import { useAuth0 } from "@auth0/auth0-react";
 import Profile from './Profile';
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../store/authSlice';
 
@@ -57,10 +57,10 @@ const Header = ({ isAuthenticated, user }) => {
         if (isAuthenticated) {
             return (
                 <>
-                    <Link to="/dashboard" className="nav-link">Dashboard</Link>
-                    <Link to="/transactions" className="nav-link">Transactions</Link>
-                    <Link to="/categories" className="nav-link">Categories</Link>
-                    <Link to="/labels" className="nav-link">Labels</Link>
+                    <NavLink to="/dashboard" className="nav-link">Dashboard</NavLink>
+                    <NavLink to="/transactions" className="nav-link">Transactions</NavLink>
+                    <NavLink to="/categories" className="nav-link">Categories</NavLink>
+                    <NavLink to="/labels" className="nav-link">Labels</NavLink>
                     <Profile />
                     <img src={user.picture} className='img-fluid rounded-circle' />
                 </>

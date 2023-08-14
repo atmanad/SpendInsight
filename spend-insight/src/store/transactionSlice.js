@@ -1,22 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const transactionSlice = createSlice({
-    name:'transaction',
-    initialState:{isLoggedIn:false, sub:null},
-    reducers:{
-        login(state, action){
-            state.isLoggedIn = true;
-            state.sub = action.payload;
-            sessionStorage.setItem('sub', action.payload);
+    name: 'transaction',
+    initialState: { transactions: [], selectedMonth: new Date(), },
+    reducers: {
+        setCurrentMonth(state, action) {
+            state.selectedMonth = action.payload;
         },
-        logout(state){
-            state.isLoggedIn = false;
-            state.sub = null;
-            sessionStorage.removeItem('sub');
+        setTransactions(state, action) {
+            state.transactions = action.payload;
         }
     }
 
-})
+});
 
+export const { setCurrentMonth, setTransactions } = transactionSlice.actions;
 export const transactionActions = transactionSlice.actions;
 export default transactionSlice;

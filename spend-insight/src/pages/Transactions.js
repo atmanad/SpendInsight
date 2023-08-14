@@ -7,7 +7,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+import Col from 'react-bootstrap/Col'
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { groupBy } from 'lodash';
 import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
@@ -17,6 +17,8 @@ import 'react-calendar/dist/Calendar.css';
 import { VictoryPie, VictoryLabel } from 'victory';
 import Skeleton from 'react-loading-skeleton';
 import IncomeItem from '../components/IncomeItem';
+import { useDispatch } from 'react-redux';
+import { transactionActions } from '../store/transactionSlice';
 
 
 const Transactions = ({ user }) => {
@@ -52,96 +54,45 @@ const Transactions = ({ user }) => {
   const [groupedSortedTransactions, setGroupedSortedTransactions] = useState({});
   const [groupedSortedIncomes, setGroupedSortedIncomes] = useState({});
   console.log(groupedSortedIncomes);
+  const dispatch = useDispatch();
 
 
+  // const calculateCategoryTotals = () => {
+  //   const categoryTotals = {};
+  //   let total = 0;
+  //   transactions.forEach((transaction) => {
+  //     const { category, amount } = transaction;
+  //     if (category in categoryTotals) {
+  //       categoryTotals[category] += amount;
+  //     } else {
+  //       categoryTotals[category] = amount;
+  //     }
+  //     total += amount;
+  //   });
 
-  // const [currentMonthSummary, setCurrentMonthSummary] = useState({
-  //   ID: 0,
-  //   Month: 0,
-  //   Year: 0,
-  //   Balance: 0,
-  //   Income: 0,
-  //   Expenses: 0
-  // });
+  //   const data = Object.entries(categoryTotals).map(([category, amount]) => ({
+  //     x: category,
+  //     y: amount,
+  //     percent: total !== 0 ? (amount / total) * 100 : 0,
+  //   }));
 
-  const incomeAmounts = monthlyIncomes.map(item => item.amount);
-  const transactionAmounts = transactions.map(item => item.amount);
-  const transactionCategories = transactions.map(item => item.category);
+  //   return data;
+  // };
 
-  const calculateCategoryTotals = () => {
-    const categoryTotals = {};
-    let total = 0;
-    transactions.forEach((transaction) => {
-      const { category, amount } = transaction;
-      if (category in categoryTotals) {
-        categoryTotals[category] += amount;
-      } else {
-        categoryTotals[category] = amount;
-      }
-      total += amount;
-    });
+  // const calculateLabelTotals = () => {
+  //   const labelTotals = {};
+  //   transactions.forEach((transaction) => {
+  //     const { label, amount } = transaction;
+  //     if (label in labelTotals) {
+  //       labelTotals[label] += amount;
+  //     } else {
+  //       if (label !== '') labelTotals[label] = amount;
+  //     }
+  //   });
+  //   return labelTotals;
+  // };
 
-    const data = Object.entries(categoryTotals).map(([category, amount]) => ({
-      x: category,
-      y: amount,
-      percent: total !== 0 ? (amount / total) * 100 : 0,
-    }));
 
-    return data;
-  };
-
-  const calculateLabelTotals = () => {
-    const labelTotals = {};
-    transactions.forEach((transaction) => {
-      const { label, amount } = transaction;
-      if (label in labelTotals) {
-        labelTotals[label] += amount;
-      } else {
-        if (label !== '') labelTotals[label] = amount;
-      }
-    });
-    return labelTotals;
-  };
-
-  const data = calculateCategoryTotals();
-  const labelTotals = calculateLabelTotals();
-
-  const colorScale = [
-    '#FFD4A0',
-    '#BDFFA0',
-    '#A0FFEE',
-    '#AEA7FF',
-    '#FFA7F2',
-    '#A7D6FF',
-    '#FFBFA7',
-    '#FFA7D7',
-    '#989BD1',
-    '#696B94',
-    '#1C2169',
-    '#BB5A63',
-    '#5ABB66',
-
-    // Add more colors here for additional categories
-  ];
-
-  const PieChart = ({ data }) => {
-    return (
-      <VictoryPie
-        height={280}
-        width={280}
-        innerRadius={50}
-        data={data}
-        colorScale={colorScale}
-        labelComponent={
-          <VictoryLabel
-            style={{ fontSize: 9 }} // Set the desired font size here
-            text={({ datum }) => `${datum.x}\n${datum.percent.toFixed(2)}%\n${datum.y}`}
-            renderInPortal
-          />
-        }
-      />
-    )
-  }
 
   useEffect(() => {
     fetchCategories();
@@ -161,11 +112,6 @@ const Transactions = ({ user }) => {
     calculateTotalExpense();
   }, [transactions]);
 
-  // useEffect(() => {
-  //   if (currentMonthSummary.Month !== 0) {
-  //     // insertMonthlySummary();
-  //   }
-  // }, [currentMonthSummary.Expenses]);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -205,6 +151,7 @@ const Transactions = ({ user }) => {
 
   const handleMonthChange = (date) => {
     setSelectedMonth(date);
+    dispatch(transactionActions.setCurrentMonth(date));
     toggleCalendarVisibility();
   };
 
@@ -222,6 +169,7 @@ const Transactions = ({ user }) => {
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
         setTransactions(response.data.transactions);
+        dispatch(transactionActions.setTransactions(response.data.transactions));
         groupAndSortByDate(response.data.transactions, setGroupedSortedTransactions);
         setMonthlyBalance(response.data.savings);
         setMonthlyIncomes(response.data.incomes);
@@ -395,6 +343,7 @@ const Transactions = ({ user }) => {
     nextMonth.setDate(1);
     nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
     setSelectedMonth(nextMonth);
+    dispatch(transactionActions.setCurrentMonth(nextMonth));
   }
 
   const goToPreviousMonth = () => {
@@ -402,12 +351,13 @@ const Transactions = ({ user }) => {
     previousMonth.setDate(1);
     previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
     setSelectedMonth(previousMonth);
+    dispatch(transactionActions.setCurrentMonth(previousMonth));
   }
 
 
   return (
     <div className='container transactions-container'>
-      <h1>Transactions</h1>
+      <h2>Transactions</h2>
       <Row className='mb-4'>
         <Col>
           <Card>
@@ -652,19 +602,6 @@ const Transactions = ({ user }) => {
           }
         </Modal.Footer>
       </Modal>
-
-      <Row>
-        <Col>
-          <PieChart data={data} />
-        </Col>
-        <Col className='d-flex align-items-center'>
-          <div className=''>
-            {
-              Object.entries(labelTotals).map(([key, value]) => <div key={key} className="label-wise-data-row">{key} : {value}</div>)
-            }
-          </div>
-        </Col>
-      </Row>
     </div>
   );
 };
