@@ -40,7 +40,7 @@ const App = () => {
     <div>
       <Header isAuthenticated={isAuthenticated} user={user} />
       <Routes>
-        <Route path="/" element={<Dashboard user={user} />} />
+        <Route path="/" element={<Home />} />
         <Route path="/transactions" element={<Transactions user={user} />} />
         <Route path="/user" element={<UserDetails/>} />
         <Route exact path="/categories" element={<CategoryManagement user={user} />} />

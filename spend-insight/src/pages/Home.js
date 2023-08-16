@@ -1,13 +1,26 @@
 import React from 'react';
-import Navbar from 'react-bootstrap/Navbar';
-import Container from 'react-bootstrap/Container';
+import { Container, Row, Col, Button } from 'react-bootstrap';
+import './Home.css'; // Import your custom CSS
 
 const Home = () => {
   return (
-    <div>
-      <Container className="mt-4">
-        <h1>Welcome to the Home Page!</h1>
-        <p>This is the content of the home page.</p>
+    <div className="home-page">
+      <Container>
+        <Row className="justify-content-center align-items-center">
+          <Col md={6}>
+            <div className="content">
+              <h1>Welcome to Spend Insight</h1>
+              <p>Your financial tracker and budgeting companion</p>
+            </div>
+          </Col>
+          <Col md={6}>
+            <img
+              src="/images/undraw_savings.svg"
+              alt="Illustration"
+              className="img-fluid"
+            />
+          </Col>
+        </Row>
       </Container>
     </div>
   );

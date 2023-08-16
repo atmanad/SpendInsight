@@ -5,13 +5,15 @@
 .item-row {
   display: flex;
   border-radius: 8px;
-  background-color:#e8e8e8;
+  background-color: #e8e8e8;
   padding: 10px;
   margin-bottom: 2px;
   align-items: center;
 }
 
-.item-category,.item-amount, .income-item-amount {
+.item-category,
+.item-amount,
+.income-item-amount {
   font-weight: bold;
 }
 
@@ -39,10 +41,11 @@
   color: #888888;
 }
 
-.income-item-amount{
+.income-item-amount {
   color: green;
 }
-.transaction-item-amount{
+
+.transaction-item-amount {
   color: red;
 }
 
@@ -58,4 +61,27 @@
 
 .modal-footer {
   justify-content: space-between;
+}
+
+#profileDropdown {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+a.dropdown-item a.nav-link {
+  color: black;
+}
+
+#logout {
+  display: block;
+  padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);
+  font-size: var(--bs-nav-link-font-size);
+  font-weight: var(--bs-nav-link-font-weight);
+  color: var(--bs-nav-link-color);
+  text-decoration: none;
+  background: none;
+  border: 0;
+}
+
+#logout:hover{
+  color: white;
 }

@@ -9,9 +9,13 @@ import { Link, NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../store/authSlice';
 
+
 const Header = ({ isAuthenticated, user }) => {
     // const { user, isAuthenticated, isLoading } = useAuth0();
     // console.log(isAuthenticated);
+    const userMetadata = useSelector(state => state.auth.userMetadata);
+    const { logout } = useAuth0();
+
     const { isLoading, getAccessTokenSilently } = useAuth0();
     const dispatch = useDispatch();
 
@@ -61,8 +65,9 @@ const Header = ({ isAuthenticated, user }) => {
                     <NavLink to="/transactions" className="nav-link">Transactions</NavLink>
                     <NavLink to="/categories" className="nav-link">Categories</NavLink>
                     <NavLink to="/labels" className="nav-link">Labels</NavLink>
-                    <Profile />
-                    <img src={user.picture} className='img-fluid rounded-circle' />
+                    <NavLink to="/user" className="nav-link">Profile</NavLink>
+                    {/* <img src={userMetadata?.picture} className='img-fluid rounded-circle mr-2' /> */}
+                    <button id='logout' onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Logout</button>
                 </>
             );
         } else {

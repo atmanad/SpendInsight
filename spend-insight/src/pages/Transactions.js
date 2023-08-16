@@ -17,8 +17,9 @@ import 'react-calendar/dist/Calendar.css';
 import { VictoryPie, VictoryLabel } from 'victory';
 import Skeleton from 'react-loading-skeleton';
 import IncomeItem from '../components/IncomeItem';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { transactionActions } from '../store/transactionSlice';
+import { setTransactions, setCurrentMonth } from '../store/transactionSlice';
 
 
 const Transactions = ({ user }) => {
@@ -41,10 +42,12 @@ const Transactions = ({ user }) => {
     notes: '',
     label: ''
   });
-  const [transactions, setTransactions] = useState([]);
+  // const [transactions, setTransactions] = useState([]);
+  const transactions = useSelector(state => state.transaction.transactions);
   const [categories, setCategories] = useState([]);
   const [labels, setLabels] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const selectedMonth = useSelector(state => state.transaction.selectedMonth);
+  // const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [totalExpense, setTotalExpense] = useState(0);
   // const [balance, setBalance] = useState(0);
@@ -57,43 +60,7 @@ const Transactions = ({ user }) => {
   const dispatch = useDispatch();
 
 
-  // const calculateCategoryTotals = () => {
-  //   const categoryTotals = {};
-  //   let total = 0;
-  //   transactions.forEach((transaction) => {
-  //     const { category, amount } = transaction;
-  //     if (category in categoryTotals) {
-  //       categoryTotals[category] += amount;
-  //     } else {
-  //       categoryTotals[category] = amount;
-  //     }
-  //     total += amount;
-  //   });
-
-  //   const data = Object.entries(categoryTotals).map(([category, amount]) => ({
-  //     x: category,
-  //     y: amount,
-  //     percent: total !== 0 ? (amount / total) * 100 : 0,
-  //   }));
-
-  //   return data;
-  // };
-
-  // const calculateLabelTotals = () => {
-  //   const labelTotals = {};
-  //   transactions.forEach((transaction) => {
-  //     const { label, amount } = transaction;
-  //     if (label in labelTotals) {
-  //       labelTotals[label] += amount;
-  //     } else {
-  //       if (label !== '') labelTotals[label] = amount;
-  //     }
-  //   });
-  //   return labelTotals;
-  // };
-
-
-
+  //useEffects
   useEffect(() => {
     fetchCategories();
     fetchLabels();
@@ -112,18 +79,16 @@ const Transactions = ({ user }) => {
     calculateTotalExpense();
   }, [transactions]);
 
+  // useEffect(() => {
+  //   const currentDate = new Date();
+  //   // Get the current month and year
+  //   const currentMonth = selectedMonth.getMonth() + 1; // Months are zero-based, so add 1
+  //   const currentYear = selectedMonth.getFullYear();
 
-  useEffect(() => {
-    const currentDate = new Date();
-
-    // Get the current month and year
-    const currentMonth = selectedMonth.getMonth() + 1; // Months are zero-based, so add 1
-    const currentYear = selectedMonth.getFullYear();
-
-    // Get the previous month and year
-    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-  }, [transactions]);
+  //   // Get the previous month and year
+  //   const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  //   const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+  // }, [transactions]);
 
   useEffect(() => {
     calculateMonthlyIncome();
@@ -148,9 +113,8 @@ const Transactions = ({ user }) => {
   const handleIncomeDateChange = (date) => {
     setIncome({ ...income, date: date });
   };
-
   const handleMonthChange = (date) => {
-    setSelectedMonth(date);
+    // setSelectedMonth(date);
     dispatch(transactionActions.setCurrentMonth(date));
     toggleCalendarVisibility();
   };
@@ -168,8 +132,8 @@ const Transactions = ({ user }) => {
       console.log(user?.sub);
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
-        setTransactions(response.data.transactions);
-        dispatch(transactionActions.setTransactions(response.data.transactions));
+        // setTransactions(response.data.transactions);
+        dispatch(setTransactions(response.data.transactions));
         groupAndSortByDate(response.data.transactions, setGroupedSortedTransactions);
         setMonthlyBalance(response.data.savings);
         setMonthlyIncomes(response.data.incomes);
@@ -342,7 +306,7 @@ const Transactions = ({ user }) => {
     const nextMonth = new Date(selectedMonth);
     nextMonth.setDate(1);
     nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
-    setSelectedMonth(nextMonth);
+    // setSelectedMonth(nextMonth);
     dispatch(transactionActions.setCurrentMonth(nextMonth));
   }
 
@@ -350,7 +314,7 @@ const Transactions = ({ user }) => {
     const previousMonth = new Date(selectedMonth);
     previousMonth.setDate(1);
     previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
-    setSelectedMonth(previousMonth);
+    // setSelectedMonth(previousMonth);
     dispatch(transactionActions.setCurrentMonth(previousMonth));
   }
 
