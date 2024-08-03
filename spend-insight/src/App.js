@@ -13,20 +13,15 @@ import { authActions } from './store/authSlice';
 import api from './api/api';
 import 'react-loading-skeleton/dist/skeleton.css'
 import Dashboard from './pages/Dashboard';
+import './App.css'
 
 
 const App = () => {
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
   const [userMetadata, setUserMetadata] = useState(null);
   const dispatch = useDispatch();
-  console.log(useSelector(state => state.auth.user));
-
-  console.log(userMetadata);
-
- 
 
   useEffect(() => {
-    console.log('inside effect', isAuthenticated, user);
     if (isAuthenticated) {
       dispatch(authActions.login(user))
     } else {
@@ -34,10 +29,8 @@ const App = () => {
     }
   }, [isAuthenticated]);
 
-  console.log(isAuthenticated);
-  console.log(user);
   return (
-    <div>
+    <div className='app-container'>
       <Header isAuthenticated={isAuthenticated} user={user} />
       <Routes>
         <Route path="/" element={<Home />} />

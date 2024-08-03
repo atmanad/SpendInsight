@@ -14,12 +14,12 @@ import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
 import 'react-calendar/dist/Calendar.css';
-import { VictoryPie, VictoryLabel } from 'victory';
+import { VictoryPie, VictoryLabel, Log } from 'victory';
 import Skeleton from 'react-loading-skeleton';
 import IncomeItem from '../components/IncomeItem';
 import { useDispatch, useSelector } from 'react-redux';
 import { transactionActions } from '../store/transactionSlice';
-import { setTransactions, setCurrentMonth } from '../store/transactionSlice';
+import { setTransactions, setCurrentMonth, setBalance } from '../store/transactionSlice';
 
 
 const Transactions = ({ user }) => {
@@ -33,7 +33,8 @@ const Transactions = ({ user }) => {
   });
   const [monthlyIncomes, setMonthlyIncomes] = useState([]);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [totalIncome, setTotalIncome] = useState(0);
+  // const [totalIncome, setTotalIncome] = useState(0);
+  const totalIncome = useSelector(state => state.transaction.balance);
   const [monthlyBalance, setMonthlyBalance] = useState(0);
   const [transaction, setTransaction] = useState({
     category: '',
@@ -56,7 +57,6 @@ const Transactions = ({ user }) => {
   const [groupedItems, setGroupedItems] = useState({});
   const [groupedSortedTransactions, setGroupedSortedTransactions] = useState({});
   const [groupedSortedIncomes, setGroupedSortedIncomes] = useState({});
-  console.log(groupedSortedIncomes);
   const dispatch = useDispatch();
 
 
@@ -69,7 +69,6 @@ const Transactions = ({ user }) => {
 
   useEffect(() => {
     if (user !== undefined) {
-      console.log(user ? true : false);
       fetchTransactions(selectedMonth);
       fetchMonthlyIncome(selectedMonth);
     }
@@ -129,7 +128,6 @@ const Transactions = ({ user }) => {
     console.log("fetch transactions called");
     setIsLoading(true);
     try {
-      console.log(user?.sub);
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
         // setTransactions(response.data.transactions);
@@ -138,7 +136,8 @@ const Transactions = ({ user }) => {
         setMonthlyBalance(response.data.savings);
         setMonthlyIncomes(response.data.incomes);
         groupAndSortByDate(response.data.incomes, setGroupedSortedIncomes);
-        setTotalIncome(response.data.balance);
+        dispatch(setBalance(response.data.balance));
+        // setTotalIncome(response.data.balance);
         setIsLoading(false);
       }
     } catch (error) {
@@ -174,12 +173,12 @@ const Transactions = ({ user }) => {
   // Fetch income
   const fetchMonthlyIncome = async (selectedMonth) => {
     try {
+      console.log("fetch monthly income called");
       const response = await api.Income.fetch(user?.sub, selectedMonth);
       if (response.status === 200) {
         setMonthlyIncomes(response.data.income);
         groupAndSortByDate(response.data.income, setGroupedSortedIncomes);
         setMonthlyBalance(response.data.savings);
-        setTotalIncome(response.data.balance);
       }
     } catch (error) {
       console.error(error);

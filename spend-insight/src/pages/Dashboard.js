@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCurrentMonth, setTransactions } from '../store/transactionSlice';
-import { Button, Row, Col, Card } from 'react-bootstrap';
+import { Button, Row, Col, Card, Table } from 'react-bootstrap';
 import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
 import DatePicker from 'react-datepicker';
-import { VictoryPie, VictoryLabel } from 'victory';
+import { VictoryPie, VictoryLabel, Log, LineSegment } from 'victory';
 import api from '../api/api';
 
 
@@ -26,7 +26,6 @@ const Dashboard = ({ user }) => {
 
   useEffect(() => {
     if (user !== undefined) {
-      console.log(user ? true : false);
       fetchTransactions(selectedMonth);
     }
   }, [selectedMonth, user]);
@@ -69,6 +68,8 @@ const Dashboard = ({ user }) => {
       percent: total !== 0 ? (amount / total) * 100 : 0,
     }));
 
+    data.sort((a, b) => b.y - a.y);
+
     return data;
   };
 
@@ -97,7 +98,6 @@ const Dashboard = ({ user }) => {
   const calculateMonthlyIncome = () => {
     console.log("calculate monthly income");
     let tempIncome = 0;
-    console.log(monthlyIncomes);
     monthlyIncomes.forEach(income => {
       tempIncome += income.amount;
     });
@@ -130,19 +130,23 @@ const Dashboard = ({ user }) => {
       <VictoryPie
         height={280}
         width={280}
-        innerRadius={50}
+        innerRadius={100}
         data={data}
         colorScale={colorScale}
+        labelIndicator
+        // labelRadius={({ radius }) =>  (Math.floor(Math.random() * 10 ) + 10) * 5}
+        radius={({ datum }) => (Math.floor(Math.random() * 10) + 5) * 5}
         labelComponent={
           <VictoryLabel
-            style={{ fontSize: 9 }} // Set the desired font size here
-            text={({ datum }) => `${datum.x}\n${datum.percent.toFixed(2)}%\n${datum.y}`}
+            style={{ fontSize: 5 }} // Set the desired font size here
+            text={({ datum }) => `${datum.x}\n${datum.y}`} //{({ datum }) => `${datum.x}\n${datum.percent.toFixed(2)}%\n${datum.y}`}
             renderInPortal
           />
         }
       />
     )
   }
+
 
   const toggleCalendarVisibility = () => {
     setCalendarVisible(!isCalendarVisible);
@@ -234,14 +238,53 @@ const Dashboard = ({ user }) => {
 
       <Row>
         <Col xs={12} md={7}>
-          <PieChart data={data} />
+          {/* <PieChart data={data} /> */}
+          {
+            data.length !== 0 &&
+            <Table hover bordered>
+              <thead>
+                <tr>
+                  <th className='row-left'>Category</th>
+                  <th className='text-center'>%</th>
+                  <th className='row-right'>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  Object.entries(data).map(([key, value]) => (
+                    <tr key={key}>
+                      <td className='row-left'>{value.x}</td>
+                      <td className='text-center'>{value.percent.toFixed(2)}</td>
+                      <td className='row-right'>{value.y}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </Table>
+          }
         </Col>
-        <Col xs={12} md={5} className='d-flex align-items-center label-wise-data-container'>
-          <div>
-            {
-              Object.entries(labelTotals).map(([key, value]) => <div key={key} className="label-wise-data-row">{key} : {value}</div>)
-            }
-          </div>
+        <Col xs={12} md={5} className='label-wise-data-container'>
+          {
+            Object.keys(labelTotals).length !== 0 &&
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th className='row-left'>Label</th>
+                  <th className='row-right'>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  Object.entries(labelTotals).map(([key, value]) => (
+                    <tr key={key}>
+                      <td className='row-left'>{key}</td>
+                      <td className='row-right'>{value}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </Table>
+          }
         </Col>
       </Row>
     </div>

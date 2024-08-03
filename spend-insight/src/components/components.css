@@ -5,7 +5,7 @@
 .item-row {
   display: flex;
   border-radius: 8px;
-  background-color: #e8e8e8;
+  background-color: #ffffff;
   padding: 10px;
   margin-bottom: 2px;
   align-items: center;
@@ -17,17 +17,62 @@
   font-weight: bold;
 }
 
-.item-category,
 .item-label,
 .item-date,
 .item-notes,
 .item-button,
 .transaction-item-amount,
-.income-item-amount,
+.income-item-amount {
+  flex-basis: 20%;
+  flex: 1;
+  text-align: center;
+}
+
+.item-category {
+  text-align: left;
+  flex-basis: 20%;
+  padding-left: 10px;
+}
+
 .item-delete-button {
   flex-basis: 20%;
-  flex-grow: 0;
-  text-align: center;
+  text-align: right;
+  padding-right: 10px;
+}
+
+@media screen and (max-width:400px) {
+  .item-row {
+    padding: 10px 0px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .item-label,
+  .item-date,
+  .item-notes,
+  .transaction-item-amount,
+  .income-item-amount {
+    font-size: 14px;
+  }
+
+  .item-category {
+    text-align: left;
+    flex-basis: 20%;
+    padding-left: 0px;
+  }
+
+  .item-delete-button {
+    flex-basis: 20%;
+    text-align: right;
+    padding-right: 0px;
+  }
+}
+
+
+.item-category,
+.item-amount,
+.income-item-amount {
+  font-weight: normal;
 }
 
 .item-delete-button {
@@ -82,6 +127,6 @@ a.dropdown-item a.nav-link {
   border: 0;
 }
 
-#logout:hover{
+#logout:hover {
   color: white;
 }

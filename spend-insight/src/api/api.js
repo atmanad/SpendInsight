@@ -8,7 +8,6 @@ const apiUrl = "https://spend-insight.us.auth0.com/api/v2";
 
 
 const fetchRequest = (method) => async (url, token, body = null) => {
-    console.log(body);
     const requestOptions = {
         method,
         headers: {

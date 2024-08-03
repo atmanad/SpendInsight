@@ -11,8 +11,6 @@ import { authActions } from '../store/authSlice';
 
 
 const Header = ({ isAuthenticated, user }) => {
-    // const { user, isAuthenticated, isLoading } = useAuth0();
-    // console.log(isAuthenticated);
     const userMetadata = useSelector(state => state.auth.userMetadata);
     const { logout } = useAuth0();
 
@@ -35,7 +33,6 @@ const Header = ({ isAuthenticated, user }) => {
                     scope: "read:current_user",
                 },
             });
-            // console.log(accessToken);
             dispatch(authActions.addToken(accessToken));
 
             const userDetailsByIdUrl = `https://${domain}/api/v2/users/${user.sub}`;
@@ -47,8 +44,6 @@ const Header = ({ isAuthenticated, user }) => {
             });
 
             const res = await metadataResponse.json();
-            // console.log(res);
-            // dispatch(authActions.addUser(res));
             dispatch(authActions.addMetadata(res));
 
             // setUserMetadata(user_metadata);  

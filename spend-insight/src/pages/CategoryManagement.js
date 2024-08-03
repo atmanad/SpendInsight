@@ -14,7 +14,6 @@ const CategoryManagement = ({ user }) => {
   const fetchCategories = async () => {
     try {
       const response = await api.Category.list(user?.sub);
-      console.log(response);
       if (response.status === 200) {
         setCategories(response.data);
         setIsLoading(false);
@@ -52,7 +51,6 @@ const CategoryManagement = ({ user }) => {
 
   const handleDeleteCategory = async (categoryId) => {
     try {
-      console.log(categoryId);
       const response = await api.Category.delete({ userId: user?.sub, categoryId: categoryId });
       if (response.status === 200) {
         fetchCategories();
@@ -101,7 +99,7 @@ const CategoryManagement = ({ user }) => {
         isLoading ?
           <Skeleton className='skeleton-table-row' count={3} />
           :
-          <Table striped bordered hover>
+          <Table bordered hover>
             <thead>
               <tr>
                 <th>Category Name</th>

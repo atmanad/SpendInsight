@@ -10,10 +10,8 @@ const UserDetail = ({ user }) => {
   const [name, setName] = useState('');
   const dispatch = useDispatch();
   const userSub = useSelector(state => state.auth.user);
-  console.log(userSub);
   const accessToken = useSelector(state => state.auth.token);
   const userMetadata = useSelector(state => state.auth.userMetadata);
-  console.log(accessToken);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);

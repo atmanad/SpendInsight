@@ -19,7 +19,7 @@ const LabelManagement = ({ user }) => {
         setIsLoading(false);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       setIsLoading(false);
     }
   };
@@ -101,7 +101,7 @@ const LabelManagement = ({ user }) => {
         isLoading ?
           <Skeleton className='skeleton-table-row' count={3} />
           :
-          <Table striped bordered hover>
+          <Table bordered hover>
             <thead>
               <tr>
                 <th>Label Name</th>
