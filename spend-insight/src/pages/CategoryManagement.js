@@ -3,11 +3,14 @@ import { Button, Form, Table } from 'react-bootstrap';
 import api from '../api/api';
 import Skeleton from 'react-loading-skeleton';
 import Spinner from 'react-bootstrap/Spinner';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCategoryArray } from '../store/transactionSlice';
 
 const CategoryManagement = ({ user }) => {
-  const [categories, setCategories] = useState([]);
+  const categoryArray = useSelector(state => state.transaction.categoryArray);
+  const dispatch = useDispatch();
   const [newCategory, setNewCategory] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(categoryArray.length === 0);
   const [buttonLoading, setButtonLoading] = useState(false);
 
 
@@ -15,7 +18,7 @@ const CategoryManagement = ({ user }) => {
     try {
       const response = await api.Category.list(user?.sub);
       if (response.status === 200) {
-        setCategories(response.data);
+        dispatch(setCategoryArray(response.data));
         setIsLoading(false);
       }
     } catch (error) {
@@ -86,7 +89,7 @@ const CategoryManagement = ({ user }) => {
                     className='mr-2'
                   />
                   Adding Category...
-                </Button> 
+                </Button>
                 :
                 <Button variant="primary" onClick={handleAddCategory}>
                   Add Category
@@ -99,6 +102,7 @@ const CategoryManagement = ({ user }) => {
         isLoading ?
           <Skeleton className='skeleton-table-row' count={3} />
           :
+          categoryArray.length !== 0 &&
           <Table bordered hover>
             <thead>
               <tr>
@@ -107,7 +111,7 @@ const CategoryManagement = ({ user }) => {
               </tr>
             </thead>
             <tbody>
-              {categories.map((category) => (
+              {categoryArray.map((category) => (
                 <tr key={category._id}>
                   <td>{category.categoryName}</td>
                   <td>
@@ -124,7 +128,7 @@ const CategoryManagement = ({ user }) => {
             </tbody>
           </Table>
       }
-    </div>
+    </div >
   );
 };
 

@@ -3,19 +3,23 @@ import { Button, Form, Table } from 'react-bootstrap';
 import api from '../api/api';
 import Skeleton from 'react-loading-skeleton';
 import Spinner from 'react-bootstrap/Spinner';
+import { useDispatch, useSelector } from 'react-redux';
+import { setLabelArray } from '../store/transactionSlice';
 
 
 const LabelManagement = ({ user }) => {
-  const [labels, setLabels] = useState([]);
+  const labelArray = useSelector(state => state.transaction.labelArray);
+  const dispatch = useDispatch();
   const [newLabel, setNewLabel] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(labelArray.length === 0);
   const [buttonLoading, setButtonLoading] = useState(false);
 
   const fetchLabels = async () => {
+    console.log('fetch label');
     try {
       const response = await api.Label.list(user?.sub);
       if (response.status === 200) {
-        setLabels(response.data);
+        dispatch(setLabelArray(response.data));
         setIsLoading(false);
       }
     } catch (error) {
@@ -101,6 +105,7 @@ const LabelManagement = ({ user }) => {
         isLoading ?
           <Skeleton className='skeleton-table-row' count={3} />
           :
+          labelArray.length !== 0 &&
           <Table bordered hover>
             <thead>
               <tr>
@@ -109,7 +114,7 @@ const LabelManagement = ({ user }) => {
               </tr>
             </thead>
             <tbody>
-              {labels.map((label) => (
+              {labelArray.map((label) => (
                 <tr key={label._id}>
                   <td>{label.labelName}</td>
                   <td>

@@ -17,9 +17,8 @@ const TransactionItem = ({ category, date, amount, notes, id, fetchTransactions,
     try {
       const response = await api.Transaction.delete(userId, id, date);
       if (response.status === 200) {
-        console.log('Transaction deleted successfully');
-        console.log(selectedMonth);
         fetchTransactions(selectedMonth);
+        setShowDeleteModal(false);
         setDeleting(false);
       }
     } catch (error) {
@@ -38,37 +37,39 @@ const TransactionItem = ({ category, date, amount, notes, id, fetchTransactions,
               Are you sure you want to delete the transaction?
             </Card.Body>
             <Card.Footer>
-                <Button variant="primary" className='mr-10' onClick={() => setShowDeleteModal(false)}>
-                  Cancel
-                </Button>
-                {
-                  deleting ? <Button variant="primary" disabled>
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      role="status"
-                      aria-hidden="true"
-                      className='mr-2'
-                    />
-                    Deleting...
-                  </Button> :
-                    <Button variant="danger" onClick={handleDelete}>
-                      Delete
-                    </Button>
-                }
+              <Button variant="primary" className='mr-10' onClick={() => setShowDeleteModal(false)}>
+                Cancel
+              </Button>
+              {
+                deleting ? <Button variant="primary" disabled>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className='mr-2'
+                  />
+                  Deleting...
+                </Button> :
+                  <Button variant="danger" onClick={handleDelete}>
+                    Delete
+                  </Button>
+              }
             </Card.Footer>
           </Card>
         </Modal.Body>
       </Modal>
-        <div className="item-row">
-          <div className="item-category">{category}</div>
+      <div className="item-row">
+        <div className="item-category">{category}</div>
+        <div className='item-middle-group'>
           <div className="item-label">{label || "---"}</div>
           <div className="item-notes">{notes || "---"}</div>
           <div className="transaction-item-amount">-{amount}</div>
-          <button className="item-delete-button pb-1" onClick={() => setShowDeleteModal(true)}>
-            <RiDeleteBin2Line />
-          </button>
+        </div>
+        <button className="item-delete-button pb-1" onClick={() => setShowDeleteModal(true)}>
+          <RiDeleteBin2Line />
+        </button>
       </div>
     </>
   );

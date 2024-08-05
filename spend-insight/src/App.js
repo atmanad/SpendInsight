@@ -2,7 +2,6 @@ import {Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Transactions from './pages/Transactions';
 import UserDetails from './pages/UserDetails';
-import Footer from './components/Footer';
 import Header from './components/Header';
 import CategoryManagement from './pages/CategoryManagement';
 import LabelManagement from './pages/LabelManagement';
@@ -40,7 +39,6 @@ const App = () => {
         <Route exact path="/labels" element={<LabelManagement user={user} />} />
         <Route exact path="/dashboard" element={<Dashboard user={user} />} />
       </Routes>
-      <Footer />
     </div>
   );
 };

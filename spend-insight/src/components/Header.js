@@ -75,7 +75,7 @@ const Header = ({ isAuthenticated, user }) => {
     };
     return (
         <Navbar bg="dark" variant="dark" expand="md" className='nav-container'>
-            <Navbar.Brand href="/">Spend Insight</Navbar.Brand>
+            <Navbar.Brand><NavLink to="/" className='navbar-brand'>Spend Insight</NavLink></Navbar.Brand>
             <Navbar.Toggle aria-controls="navbar-nav" />
             <Navbar.Collapse id="navbar-nav">
                 <Nav className="ml-auto">

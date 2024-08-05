@@ -4,9 +4,9 @@ import './Home.css'; // Import your custom CSS
 
 const Home = () => {
   return (
-    <div className="home-page">
+    <div className="home-page d-flex align-items-center">
       <Container>
-        <Row className="justify-content-center align-items-center">
+        <Row className="justify-content-center align-items-center row-container">
           <Col md={6}>
             <div className="content">
               <h1>Welcome to Spend Insight</h1>

@@ -1,28 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCurrentMonth, setTransactions } from '../store/transactionSlice';
+import { setCurrentMonth, setTransactions, setSavings, setMonthlyIncome, setBalance, setIncomeArray } from '../store/transactionSlice';
 import { Button, Row, Col, Card, Table } from 'react-bootstrap';
 import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
 import DatePicker from 'react-datepicker';
-import { VictoryPie, VictoryLabel, Log, LineSegment } from 'victory';
+import { VictoryPie, VictoryLabel } from 'victory';
 import api from '../api/api';
 
 
 const Dashboard = ({ user }) => {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
-  const [monthlyIncomes, setMonthlyIncomes] = useState([]);
-  const [monthlyIncome, setMonthlyIncome] = useState(0);
-  const [totalBalance, setTotalBalance] = useState(0);
-  const [monthlyBalance, setMonthlyBalance] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const dispatch = useDispatch();
   const transactions = useSelector(state => state.transaction.transactions);
   const selectedMonth = useSelector(state => state.transaction.selectedMonth);
+  const monthlySavings = useSelector(state => state.transaction.savings);
+  const monthlyIncome = useSelector(state => state.transaction.monthlyIncome);
+  const totalBalance = useSelector(state => state.transaction.balance);
+  const incomeArray = useSelector(state => state.transaction.incomeArray);
 
-
-  // useEffect(() => {
-  //   fetchTransactions(selectedMonth);
-  // }, [selectedMonth]);
 
   useEffect(() => {
     if (user !== undefined) {
@@ -31,12 +27,14 @@ const Dashboard = ({ user }) => {
   }, [selectedMonth, user]);
 
   useEffect(() => {
+    console.log(incomeArray);
     calculateTotalExpense();
     calculateMonthlyIncome();
-  }, [monthlyIncomes]);
+  }, [incomeArray]);
 
 
-  const calculateLabelTotals = () => {
+  const labelTotals = useMemo(() => {
+    console.log("label total");
     const labelTotals = {};
     transactions.forEach((transaction) => {
       const { label, amount } = transaction;
@@ -47,9 +45,10 @@ const Dashboard = ({ user }) => {
       }
     });
     return labelTotals;
-  };
+  }, [transactions]);
 
-  const calculateCategoryTotals = () => {
+  const categoryTotals = useMemo(() => {
+    console.log('calculateCategoryTotals()');
     const categoryTotals = {};
     let total = 0;
     transactions.forEach((transaction) => {
@@ -71,16 +70,17 @@ const Dashboard = ({ user }) => {
     data.sort((a, b) => b.y - a.y);
 
     return data;
-  };
+  }, [transactions]);
 
   const fetchTransactions = async (selectedMonth) => {
+    console.log("fetch transaction");
     try {
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
         dispatch(setTransactions(response.data.transactions));
-        setMonthlyBalance(response.data.savings);
-        setMonthlyIncomes(response.data.incomes);
-        setTotalBalance(response.data.balance);
+        dispatch(setSavings(response.data.savings));
+        dispatch(setIncomeArray(response.data.incomes));
+        dispatch(setBalance(response.data.balance));
       }
     } catch (error) {
       console.error("status: ", error?.response?.status, "error text: ", error?.response?.data?.error);
@@ -98,14 +98,11 @@ const Dashboard = ({ user }) => {
   const calculateMonthlyIncome = () => {
     console.log("calculate monthly income");
     let tempIncome = 0;
-    monthlyIncomes.forEach(income => {
+    incomeArray.forEach(income => {
       tempIncome += income.amount;
     });
-    setMonthlyIncome(tempIncome);
+    dispatch(setMonthlyIncome(tempIncome));
   }
-
-  const data = calculateCategoryTotals();
-  const labelTotals = calculateLabelTotals();
 
   const colorScale = [
     '#FFD4A0',
@@ -187,8 +184,8 @@ const Dashboard = ({ user }) => {
           <Col>
             <Card>
               <Card.Body>
-                <Card.Title>Monthly Balance</Card.Title>
-                <Card.Text className={monthlyBalance > 0 ? 'text-success' : 'text-danger'}>{monthlyBalance}</Card.Text>
+                <Card.Title>Monthly Savings</Card.Title>
+                <Card.Text className={monthlySavings > 0 ? 'text-success' : 'text-danger'}>{monthlySavings}</Card.Text>
               </Card.Body>
             </Card>
           </Col>
@@ -238,9 +235,9 @@ const Dashboard = ({ user }) => {
 
       <Row>
         <Col xs={12} md={7}>
-          {/* <PieChart data={data} /> */}
+          {/* <PieChart data={categoryTotals} /> */}
           {
-            data.length !== 0 &&
+            categoryTotals.length !== 0 &&
             <Table hover bordered>
               <thead>
                 <tr>
@@ -251,7 +248,7 @@ const Dashboard = ({ user }) => {
               </thead>
               <tbody>
                 {
-                  Object.entries(data).map(([key, value]) => (
+                  Object.entries(categoryTotals).map(([key, value]) => (
                     <tr key={key}>
                       <td className='row-left'>{value.x}</td>
                       <td className='text-center'>{value.percent.toFixed(2)}</td>

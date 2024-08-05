@@ -8,7 +8,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import api from "../api/api"
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 
-const IncomeItem = ({ date, amount, notes, id, userId, category , fetchMonthlyIncome, selectedMonth}) => {
+const IncomeItem = ({ date, amount, notes, id, userId, category, fetchMonthlyIncome, selectedMonth }) => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
@@ -65,9 +65,11 @@ const IncomeItem = ({ date, amount, notes, id, userId, category , fetchMonthlyIn
             </Modal>
             <div className="item-row">
                 <div className="item-category">{category || "---"}</div>
-                <div className="item-date">{format(new Date(date), 'dd MMM')}</div>
-                <div className="item-notes">{notes}</div>
-                <div className="income-item-amount">+{amount}</div>
+                <div className='item-middle-group'>
+                    <div className="item-date">{format(new Date(date), 'dd MMM')}</div>
+                    <div className="item-notes">{notes}</div>
+                    <div className="income-item-amount">+{amount}</div>
+                </div>
                 <button className="item-delete-button pb-1" onClick={() => setShowDeleteModal(true)}>
                     <RiDeleteBin2Line />
                 </button>
