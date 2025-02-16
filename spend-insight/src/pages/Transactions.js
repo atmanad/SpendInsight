@@ -164,7 +164,7 @@ const Transactions = ({ user }) => {
       console.log("fetch monthly income called");
       const response = await api.Income.fetch(user?.sub, selectedMonth);
       if (response.status === 200) {
-        dispatch(setIncomeArray(response.data.incomes));
+        dispatch(setIncomeArray(response.data.income));
         groupAndSortByDate(response.data.income, setSortedIncomes);
         dispatch(setSavings(response.data.savings));
       }
@@ -196,7 +196,14 @@ const Transactions = ({ user }) => {
           category: ''
         });
         setShowIncomeModal(false);
-        fetchMonthlyIncome(selectedMonth);
+
+        // Use the updated state from the response
+        const { income, savings, balance } = response.data;
+        dispatch(setIncomeArray(income));
+        groupAndSortByDate(income, setSortedIncomes);
+        dispatch(setSavings(savings));
+        dispatch(setBalance(balance));
+
         setSubmitting(false);
       }
     } catch (error) {
@@ -251,9 +258,11 @@ const Transactions = ({ user }) => {
   // Calculate balance
   const calculateMonthlyIncome = () => {
     let tempIncome = 0;
-    incomeArray.forEach(income => {
-      tempIncome += income.amount;
-    });
+    if (incomeArray && incomeArray.length !== 0) {
+      incomeArray.forEach(income => {
+        tempIncome += income.amount;
+      });
+    }
     dispatch(setMonthlyIncome(tempIncome));
   }
 
@@ -275,20 +284,34 @@ const Transactions = ({ user }) => {
     setTotalExpense(tempExpense);
   }
 
+  // const goToNextMonth = () => {
+  //   console.log("handlemonthchange");
+  //   const nextMonth = new Date(selectedMonth);
+  //   nextMonth.setDate(1);
+  //   nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
+  //   // setSelectedMonth(nextMonth);
+  //   dispatch(setCurrentMonth(nextMonth));
+  // }
+
+  // const goToPreviousMonth = () => {
+  //   console.log("handlemonthchange");
+  //   const previousMonth = new Date(selectedMonth);
+  //   previousMonth.setDate(1);
+  //   previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
+  //   dispatch(setCurrentMonth(previousMonth));
+  // }
+
   const goToNextMonth = () => {
     console.log("handlemonthchange");
     const nextMonth = new Date(selectedMonth);
-    nextMonth.setDate(1);
-    nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
-    // setSelectedMonth(nextMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
     dispatch(setCurrentMonth(nextMonth));
   }
-
+  
   const goToPreviousMonth = () => {
     console.log("handlemonthchange");
     const previousMonth = new Date(selectedMonth);
-    previousMonth.setDate(1);
-    previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
+    previousMonth.setMonth(previousMonth.getMonth() - 1);
     dispatch(setCurrentMonth(previousMonth));
   }
 
@@ -385,8 +408,7 @@ const Transactions = ({ user }) => {
                       id={income._id}
                       userId={user?.sub}
                       category={income.category}
-                      fetchMonthlyIncome={fetchMonthlyIncome}
-                      selectedMonth={selectedMonth}
+                      groupAndSortByDate={groupAndSortByDate}
                     />
                   ))
                 }

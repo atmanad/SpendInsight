@@ -80,3 +80,13 @@ add expense -
 del expense +
 add income +
 del income -
+
+
+vercel atmanad
+mongo padhysagar
+netlify atmanad
+
+
+
+if i am adding income, i should send the updated income with the response, not 
+needed for another api call

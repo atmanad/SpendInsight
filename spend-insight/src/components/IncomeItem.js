@@ -6,12 +6,15 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button'
 import Spinner from 'react-bootstrap/Spinner';
 import api from "../api/api"
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { format } from 'date-fns';
+import { useDispatch } from 'react-redux';
+import { setSavings, setSortedIncomes, setBalance, setIncomeArray } from '../store/transactionSlice';
 
-const IncomeItem = ({ date, amount, notes, id, userId, category, fetchMonthlyIncome, selectedMonth }) => {
+const IncomeItem = ({ date, amount, notes, id, userId, category, groupAndSortByDate }) => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const dispatch = useDispatch();
 
     const handleDelete = async () => {
         setDeleting(true);
@@ -19,7 +22,14 @@ const IncomeItem = ({ date, amount, notes, id, userId, category, fetchMonthlyInc
             const response = await api.Income.delete(userId, id, date);
             if (response.status === 200) {
                 console.log('Income deleted successfully');
-                fetchMonthlyIncome(selectedMonth);
+
+                // Use the updated state from the response
+                const { income, savings, balance } = response.data;
+                dispatch(setIncomeArray(income));
+                groupAndSortByDate(income, setSortedIncomes);
+                dispatch(setSavings(savings));
+                dispatch(setBalance(balance));
+
                 setDeleting(false);
                 setShowDeleteModal(false);
             }
