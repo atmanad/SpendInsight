@@ -62,7 +62,8 @@ const Transaction = {
     list: (userId, selectedMonth) => requests.get(`/transactions?userId=${userId}&month=${selectedMonth}`),
     insert: (data) => requests.post("/transactions", data),
     listByMonth: (userId, selectedMonth) => requests.get(`/transactions/?userId=${userId}&selectedMonth=${selectedMonth}`),
-    delete: (userId, transactionId, date) => requests.del(`/transactions?userId=${userId}&transactionId=${transactionId}&date=${date}`)
+    delete: (userId, transactionId, date) => requests.del(`/transactions?userId=${userId}&transactionId=${transactionId}&date=${date}`),
+    update: (data) => requests.put("/transactions", data)
 };
 
 const Category = {
@@ -87,6 +88,7 @@ const Income = {
     fetch: (userId, date) => requests.get(`/income?userId=${userId}&date=${date}`),
     insert: (data) => requests.post("/income", data),
     delete: (userId, incomeId, date) => requests.del(`/income/?userId=${userId}&incomeId=${incomeId}&date=${date}`),
+    update: (data) => requests.put("/income", data)
 }
 
 const User = {

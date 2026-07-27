@@ -1,81 +1,70 @@
 import React, { useState } from 'react';
-import './components.css';
-import { RiDeleteBin2Line } from "react-icons/ri"
-import Modal from 'react-bootstrap/Modal';
-import Card from 'react-bootstrap/Card';
-import Button from 'react-bootstrap/Button'
-import Spinner from 'react-bootstrap/Spinner';
-import api from "../api/api"
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { Trash2, Edit2, TrendingUp } from 'lucide-react';
+import api from '../api/api';
+import { Button } from './ui';
+import { format } from 'date-fns';
 
-const IncomeItem = ({ date, amount, notes, id, userId, category, fetchMonthlyIncome, selectedMonth }) => {
+const IncomeItem = ({ date, amount, notes, id, userId, category, fetchMonthlyIncome, selectedMonth, onEdit }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
 
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-
-    const handleDelete = async () => {
-        setDeleting(true);
-        try {
-            const response = await api.Income.delete(userId, id, date);
-            if (response.status === 200) {
-                console.log('Income deleted successfully');
-                fetchMonthlyIncome(selectedMonth);
-                setDeleting(false);
-                setShowDeleteModal(false);
-            }
-        } catch (error) {
-            console.error(error);
-            setDeleting(false);
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this income entry?")) {
+      setIsDeleting(true);
+      try {
+        const response = await api.Income.delete(userId, id, date);
+        if (response.status === 200) {
+          fetchMonthlyIncome(selectedMonth);
         }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsDeleting(false);
+      }
     }
+  };
 
+  return (
+    <div className="group flex items-center justify-between p-4 bg-emerald-50/50 dark:bg-emerald-900/10 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/20 transition-all border-b border-emerald-100 dark:border-emerald-900/30 last:border-0 overflow-hidden">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+          <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground truncate">{category || 'Income'}</span>
+          </div>
+          <span className="text-sm text-muted-foreground truncate">{notes || 'No description'}</span>
+        </div>
+      </div>
 
-    return (
-        <>
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-                <Modal.Body>
-                    <Card>
-                        <Card.Body>
-                            Are you sure you want to delete the income?
-                        </Card.Body>
-                        <Card.Footer>
-                            <Button variant="primary" className='mr-10' onClick={() => setShowDeleteModal(false)}>
-                                Cancel
-                            </Button>
-                            {
-                                deleting ?
-                                    <Button variant="primary" disabled>
-                                        <Spinner
-                                            as="span"
-                                            animation="border"
-                                            size="sm"
-                                            role="status"
-                                            aria-hidden="true"
-                                            className='mr-2'
-                                        />
-                                        Deleting...
-                                    </Button> :
-                                    <Button variant="danger" onClick={handleDelete}>
-                                        Delete
-                                    </Button>
-                            }
-                        </Card.Footer>
-                    </Card>
-                </Modal.Body>
-            </Modal>
-            <div className="item-row">
-                <div className="item-category">{category || "---"}</div>
-                <div className='item-middle-group'>
-                    <div className="item-date">{format(new Date(date), 'dd MMM')}</div>
-                    <div className="item-notes">{notes}</div>
-                    <div className="income-item-amount">+{amount}</div>
-                </div>
-                <button className="item-delete-button pb-1" onClick={() => setShowDeleteModal(true)}>
-                    <RiDeleteBin2Line />
-                </button>
-            </div>
-        </>
-    );
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col items-end">
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">+₹{amount.toLocaleString()}</span>
+          <span className="text-xs text-muted-foreground">{format(new Date(date), 'MMM d, yyyy')}</span>
+        </div>
+        
+        <div className="flex items-center gap-1 opacity-40 md:opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={onEdit}
+          >
+            <Edit2 className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default IncomeItem;

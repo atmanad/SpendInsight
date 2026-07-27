@@ -1,136 +1,156 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Form, Table } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, PieChart, Tag } from 'lucide-react';
 import api from '../api/api';
-import Skeleton from 'react-loading-skeleton';
-import Spinner from 'react-bootstrap/Spinner';
-import { useDispatch, useSelector } from 'react-redux';
-import { setLabelArray } from '../store/transactionSlice';
-
+import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
+import Modal from '../components/ui/Modal';
 
 const LabelManagement = ({ user }) => {
-  const labelArray = useSelector(state => state.transaction.labelArray);
-  const dispatch = useDispatch();
+  const [labels, setLabels] = useState([]);
+  const [showModal, setShowModal] = useState(false);
   const [newLabel, setNewLabel] = useState('');
-  const [isLoading, setIsLoading] = useState(labelArray.length === 0);
-  const [buttonLoading, setButtonLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchLabels();
+    }
+  }, [user]);
 
   const fetchLabels = async () => {
-    console.log('fetch label');
     try {
-      const response = await api.Label.list(user?.sub);
+      setIsLoading(true);
+      const response = await api.Label.list(user.sub);
       if (response.status === 200) {
-        dispatch(setLabelArray(response.data));
-        setIsLoading(false);
+        setLabels(response.data);
       }
     } catch (error) {
       console.error(error);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchLabels();
-  }, []);
-
   const handleAddLabel = async () => {
-    setButtonLoading(true);
+    if (!newLabel.trim()) return;
+    setSubmitting(true);
     try {
-      if (!newLabel) {
-        alert('Please enter a label name');
-        setButtonLoading(false);
-        return;
-      }
-
-      const response = await api.Label.insert({ userId: user?.sub, labelName: newLabel });
+      const response = await api.Label.insert({
+        userId: user.sub,
+        labelName: newLabel,
+      });
       if (response.status === 200) {
         setNewLabel('');
+        setShowModal(false);
         fetchLabels();
-        setButtonLoading(false);
       }
     } catch (error) {
-      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
-      setButtonLoading(false);
+      console.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDeleteLabel = async (labelId) => {
-    try {
-      const response = await api.Label.delete({ userId: user?.sub, labelId: labelId });
-      if (response.status === 200) {
-        fetchLabels();
+    if (window.confirm("Are you sure you want to delete this label?")) {
+      try {
+        const response = await api.Label.delete({
+          userId: user.sub,
+          labelId: labelId,
+        });
+        if (response.status === 200) {
+          fetchLabels();
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
     }
   };
 
   return (
-    <div className="container">
-      <h2>Label Management</h2>
+    <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Labels</h2>
+          <p className="text-muted-foreground">Add extra context to your transactions with labels.</p>
+        </div>
+        <Button onClick={() => setShowModal(true)} className="self-start">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Label
+        </Button>
+      </div>
 
-      <Form className="mb-3">
-        <Form.Label>New Label</Form.Label>
-        <div className='row'>
-          <div className='col'>
-            <Form.Control
-              type="text"
+      <Card className="card-shadow overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center">
+            <PieChart className="w-4 h-4 mr-2" />
+            Active Labels
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : labels.length > 0 ? (
+            <div className="divide-y divide-border">
+              {labels.map((label) => (
+                <div key={label._id} className="flex items-center justify-between p-4 px-6 hover:bg-muted/20 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                      <Tag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <span className="font-medium">{label.labelName}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDeleteLabel(label._id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-muted-foreground italic">
+              No labels found. Click "Add Label" to get started.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Modal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)}
+        title="Add New Label"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button onClick={handleAddLabel} disabled={submitting}>
+              {submitting ? 'Adding...' : 'Add Label'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Label Name</label>
+            <input 
+              type="text" 
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+              placeholder="e.g. Work, Personal, Vacation"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleAddLabel()}
             />
           </div>
-          <div className='col-auto'>
-            {
-              buttonLoading ?
-                <Button variant="primary" disabled>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className='mr-2'
-                  />
-                  Adding Label...
-                </Button>
-                :
-                <Button variant="primary" onClick={handleAddLabel}>
-                  Add Label
-                </Button>
-            }
-          </div>
         </div>
-      </Form>
-
-      {
-        isLoading ?
-          <Skeleton className='skeleton-table-row' count={3} />
-          :
-          labelArray.length !== 0 &&
-          <Table bordered hover>
-            <thead>
-              <tr>
-                <th>Label Name</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {labelArray.map((label) => (
-                <tr key={label._id}>
-                  <td>{label.labelName}</td>
-                  <td>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDeleteLabel(label._id)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-      }
+      </Modal>
     </div>
   );
 };

@@ -80,3 +80,7 @@ add expense -
 del expense +
 add income +
 del income -
+
+
+AUTH 0 PADHYSAGAR
+MONGO PADHYSAGAR

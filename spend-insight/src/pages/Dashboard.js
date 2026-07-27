@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCurrentMonth, setTransactions, setSavings, setMonthlyIncome, setBalance, setIncomeArray } from '../store/transactionSlice';
-import { Button, Row, Col, Card, Table } from 'react-bootstrap';
-import { RiArrowLeftFill, RiArrowRightFill } from 'react-icons/ri';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Wallet, TrendingUp, TrendingDown, PiggyBank } from 'lucide-react';
 import DatePicker from 'react-datepicker';
-import { VictoryPie, VictoryLabel } from 'victory';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import api from '../api/api';
-
+import { Card, CardContent, CardHeader, CardTitle, Button, cn } from '../components/ui';
 
 const Dashboard = ({ user }) => {
   const [isCalendarVisible, setCalendarVisible] = useState(false);
@@ -19,7 +18,6 @@ const Dashboard = ({ user }) => {
   const totalBalance = useSelector(state => state.transaction.balance);
   const incomeArray = useSelector(state => state.transaction.incomeArray);
 
-
   useEffect(() => {
     if (user !== undefined) {
       fetchTransactions(selectedMonth);
@@ -27,53 +25,38 @@ const Dashboard = ({ user }) => {
   }, [selectedMonth, user]);
 
   useEffect(() => {
-    console.log(incomeArray);
     calculateTotalExpense();
     calculateMonthlyIncome();
-  }, [incomeArray]);
-
+  }, [incomeArray, transactions]);
 
   const labelTotals = useMemo(() => {
-    console.log("label total");
-    const labelTotals = {};
+    const totals = {};
     transactions.forEach((transaction) => {
       const { label, amount } = transaction;
-      if (label in labelTotals) {
-        labelTotals[label] += amount;
-      } else {
-        if (label !== '') labelTotals[label] = amount;
+      if (label) {
+        totals[label] = (totals[label] || 0) + amount;
       }
     });
-    return labelTotals;
+    return Object.entries(totals).map(([name, value]) => ({ name, value }));
   }, [transactions]);
 
   const categoryTotals = useMemo(() => {
-    console.log('calculateCategoryTotals()');
-    const categoryTotals = {};
+    const totals = {};
     let total = 0;
     transactions.forEach((transaction) => {
       const { category, amount } = transaction;
-      if (category in categoryTotals) {
-        categoryTotals[category] += amount;
-      } else {
-        categoryTotals[category] = amount;
-      }
+      totals[category] = (totals[category] || 0) + amount;
       total += amount;
     });
 
-    const data = Object.entries(categoryTotals).map(([category, amount]) => ({
-      x: category,
-      y: amount,
-      percent: total !== 0 ? (amount / total) * 100 : 0,
-    }));
-
-    data.sort((a, b) => b.y - a.y);
-
-    return data;
+    return Object.entries(totals).map(([name, value]) => ({
+      name,
+      value,
+      percent: total !== 0 ? (value / total) * 100 : 0,
+    })).sort((a, b) => b.value - a.value);
   }, [transactions]);
 
   const fetchTransactions = async (selectedMonth) => {
-    console.log("fetch transaction");
     try {
       const response = await api.Transaction.listByMonth(user?.sub, selectedMonth);
       if (response.status === 200) {
@@ -83,20 +66,17 @@ const Dashboard = ({ user }) => {
         dispatch(setBalance(response.data.balance));
       }
     } catch (error) {
-      console.error("status: ", error?.response?.status, "error text: ", error?.response?.data?.error);
       console.error(error);
     }
   };
 
   const calculateTotalExpense = () => {
-    console.log("calculate total expense");
     let tempExpense = 0;
     transactions.forEach(t1 => tempExpense += t1.amount);
     setTotalExpense(tempExpense);
   }
 
   const calculateMonthlyIncome = () => {
-    console.log("calculate monthly income");
     let tempIncome = 0;
     incomeArray.forEach(income => {
       tempIncome += income.amount;
@@ -104,186 +84,169 @@ const Dashboard = ({ user }) => {
     dispatch(setMonthlyIncome(tempIncome));
   }
 
-  const colorScale = [
-    '#FFD4A0',
-    '#BDFFA0',
-    '#A0FFEE',
-    '#AEA7FF',
-    '#FFA7F2',
-    '#A7D6FF',
-    '#FFBFA7',
-    '#FFA7D7',
-    '#989BD1',
-    '#696B94',
-    '#1C2169',
-    '#BB5A63',
-    '#5ABB66',
-
-    // Add more colors here for additional categories
+  const COLORS = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
+    '#ec4899', '#06b6d4', '#475569', '#14b8a6', '#f43f5e'
   ];
-
-  const PieChart = ({ data }) => {
-    return (
-      <VictoryPie
-        height={280}
-        width={280}
-        innerRadius={100}
-        data={data}
-        colorScale={colorScale}
-        labelIndicator
-        // labelRadius={({ radius }) =>  (Math.floor(Math.random() * 10 ) + 10) * 5}
-        radius={({ datum }) => (Math.floor(Math.random() * 10) + 5) * 5}
-        labelComponent={
-          <VictoryLabel
-            style={{ fontSize: 5 }} // Set the desired font size here
-            text={({ datum }) => `${datum.x}\n${datum.y}`} //{({ datum }) => `${datum.x}\n${datum.percent.toFixed(2)}%\n${datum.y}`}
-            renderInPortal
-          />
-        }
-      />
-    )
-  }
-
-
-  const toggleCalendarVisibility = () => {
-    setCalendarVisible(!isCalendarVisible);
-  };
 
   const handleMonthChange = (date) => {
     dispatch(setCurrentMonth(date));
-    toggleCalendarVisibility();
+    setCalendarVisible(false);
   };
 
   const goToNextMonth = () => {
     const nextMonth = new Date(selectedMonth);
-    nextMonth.setDate(1);
-    nextMonth.setMonth(nextMonth.getUTCMonth() + 1);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
     dispatch(setCurrentMonth(nextMonth));
   }
 
   const goToPreviousMonth = () => {
     const previousMonth = new Date(selectedMonth);
-    previousMonth.setDate(1);
-    previousMonth.setMonth(previousMonth.getUTCMonth() - 1);
+    previousMonth.setMonth(previousMonth.getMonth() - 1);
     dispatch(setCurrentMonth(previousMonth));
   }
 
+  const KPI_CARDS = [
+    { title: 'Total Balance', value: totalBalance, icon: Wallet, color: 'text-primary' },
+    { title: 'Monthly Savings', value: monthlySavings, icon: PiggyBank, color: 'text-emerald-500' },
+    { title: 'Monthly Income', value: monthlyIncome, icon: TrendingUp, color: 'text-emerald-500' },
+    { title: 'Monthly Expenses', value: totalExpense, icon: TrendingDown, color: 'text-destructive' },
+  ];
+
   return (
-    <div className='container'>
-      <h2>Dashboard</h2>
-      <div>
-        <Row className='mb-4'>
-          <Col>
-            <Card>
-              <Card.Body>
-                <Card.Title>Total Balance</Card.Title>
-                <Card.Text className={totalBalance > 0 ? 'text-success' : 'text-danger'}>{totalBalance}</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col>
-            <Card>
-              <Card.Body>
-                <Card.Title>Monthly Savings</Card.Title>
-                <Card.Text className={monthlySavings > 0 ? 'text-success' : 'text-danger'}>{monthlySavings}</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-
-        <Row>
-          <Col>
-            <Card>
-              <Card.Body>
-                <Card.Title>Monthly Income</Card.Title>
-                <Card.Text className={monthlyIncome > 0 ? 'text-success' : 'text-danger'}>{monthlyIncome}</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col>
-            <Card>
-              <Card.Body>
-                <Card.Title>Monthly Expenses</Card.Title>
-                <Card.Text className='text-danger'>{totalExpense}</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </div>
-      <div className='text-center'>
-        <Button className='date-button-left' onClick={goToPreviousMonth}>
-          <RiArrowLeftFill />
-        </Button>
-        <Button variant="secondary" className='my-4' onClick={toggleCalendarVisibility}>
-          {`${selectedMonth.toLocaleString('default', { month: 'long' })}  ${selectedMonth.getFullYear()}`}
-        </Button>
-        <Button className='date-button-right' onClick={goToNextMonth}>
-          <RiArrowRightFill />
-        </Button>
-      </div>
-      <div className="calendar">
-        {isCalendarVisible && (
-          <DatePicker
-            selected={selectedMonth}
-            onChange={handleMonthChange}
-            dateFormat="MMMM yyyy"
-            showMonthYearPicker
-            className="form-control"
-          />
-        )}
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">Monitor your spending and income trends.</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-card border border-border p-1 rounded-lg self-start">
+          <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="relative">
+            <Button 
+              variant="ghost" 
+              className="px-3 py-1 font-medium min-w-[140px]"
+              onClick={() => setCalendarVisible(!isCalendarVisible)}
+            >
+              <CalendarIcon className="w-4 h-4 mr-2 text-primary" />
+              {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </Button>
+            {isCalendarVisible && (
+              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[100] bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
+                <DatePicker
+                  selected={selectedMonth}
+                  onChange={handleMonthChange}
+                  dateFormat="MMMM yyyy"
+                  showMonthYearPicker
+                  inline
+                />
+              </div>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" onClick={goToNextMonth}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      <Row>
-        <Col xs={12} md={7}>
-          {/* <PieChart data={categoryTotals} /> */}
-          {
-            categoryTotals.length !== 0 &&
-            <Table hover bordered>
-              <thead>
-                <tr>
-                  <th className='row-left'>Category</th>
-                  <th className='text-center'>%</th>
-                  <th className='row-right'>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  Object.entries(categoryTotals).map(([key, value]) => (
-                    <tr key={key}>
-                      <td className='row-left'>{value.x}</td>
-                      <td className='text-center'>{value.percent.toFixed(2)}</td>
-                      <td className='row-right'>{value.y}</td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </Table>
-          }
-        </Col>
-        <Col xs={12} md={5} className='label-wise-data-container'>
-          {
-            Object.keys(labelTotals).length !== 0 &&
-            <Table bordered hover>
-              <thead>
-                <tr>
-                  <th className='row-left'>Label</th>
-                  <th className='row-right'>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  Object.entries(labelTotals).map(([key, value]) => (
-                    <tr key={key}>
-                      <td className='row-left'>{key}</td>
-                      <td className='row-right'>{value}</td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </Table>
-          }
-        </Col>
-      </Row>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {KPI_CARDS.map((card) => (
+          <Card key={card.title} className="card-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+              <card.icon className={cn("w-4 h-4", card.color)} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {card.value < 0 ? '-' : ''}₹{Math.abs(card.value).toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle>Spending by Category</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[350px] flex items-center justify-center">
+            {categoryTotals.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryTotals}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {categoryTotals.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      backgroundColor: 'hsl(var(--card))',
+                      color: 'hsl(var(--card-foreground))'
+                    }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                    formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
+                  />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground italic">No data for this month</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow overflow-hidden">
+          <CardHeader>
+            <CardTitle>Category Analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground uppercase">Category</th>
+                    <th className="px-6 py-3 text-center font-semibold text-muted-foreground uppercase">%</th>
+                    <th className="px-6 py-3 text-right font-semibold text-muted-foreground uppercase">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {categoryTotals.length > 0 ? (
+                    categoryTotals.map((item, index) => (
+                      <tr key={item.name} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4 flex items-center">
+                          <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                          <span className="font-medium">{item.name}</span>
+                        </td>
+                        <td className="px-6 py-4 text-center text-muted-foreground">{item.percent.toFixed(1)}%</td>
+                        <td className="px-6 py-4 text-right font-semibold">₹{item.value.toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                    <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground italic">No transactions found</td>
+                  </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,24 +1,22 @@
-import {Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Transactions from './pages/Transactions';
 import UserDetails from './pages/UserDetails';
-import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import CategoryManagement from './pages/CategoryManagement';
 import LabelManagement from './pages/LabelManagement';
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { authActions } from './store/authSlice';
-import api from './api/api';
 import 'react-loading-skeleton/dist/skeleton.css'
 import Dashboard from './pages/Dashboard';
 import './App.css'
 
-
 const App = () => {
-  const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
-  const [userMetadata, setUserMetadata] = useState(null);
+  const { user, isAuthenticated, isLoading } = useAuth0();
   const dispatch = useDispatch();
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -26,19 +24,43 @@ const App = () => {
     } else {
       dispatch(authActions.logout())
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, dispatch]);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className='app-container'>
-      <Header isAuthenticated={isAuthenticated} user={user} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/transactions" element={<Transactions user={user} />} />
-        <Route path="/user" element={<UserDetails/>} />
-        <Route exact path="/categories" element={<CategoryManagement user={user} />} />
-        <Route exact path="/labels" element={<LabelManagement user={user} />} />
-        <Route exact path="/dashboard" element={<Dashboard user={user} />} />
-      </Routes>
+    <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+      {isAuthenticated && (
+        <Sidebar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+      )}
+      <main className={`flex-1 flex flex-col min-w-0 ${isAuthenticated ? 'overflow-hidden' : ''}`}>
+        <div className={`flex-1 overflow-y-auto ${isAuthenticated ? 'p-4 md:p-8' : ''}`}>
+          <Routes>
+            <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Home />} />
+            <Route path="/dashboard" element={isAuthenticated ? <Dashboard user={user} /> : <Navigate to="/" />} />
+            <Route path="/transactions" element={isAuthenticated ? <Transactions user={user} /> : <Navigate to="/" />} />
+            <Route path="/categories" element={isAuthenticated ? <CategoryManagement user={user} /> : <Navigate to="/" />} />
+            <Route path="/labels" element={isAuthenticated ? <LabelManagement user={user} /> : <Navigate to="/" />} />
+            <Route path="/user" element={isAuthenticated ? <UserDetails /> : <Navigate to="/" />} />
+          </Routes>
+        </div>
+      </main>
     </div>
   );
 };

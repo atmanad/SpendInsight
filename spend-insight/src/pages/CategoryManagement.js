@@ -1,134 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Form, Table } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Tags, Hash } from 'lucide-react';
 import api from '../api/api';
-import Skeleton from 'react-loading-skeleton';
-import Spinner from 'react-bootstrap/Spinner';
-import { useDispatch, useSelector } from 'react-redux';
-import { setCategoryArray } from '../store/transactionSlice';
+import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
+import Modal from '../components/ui/Modal';
 
 const CategoryManagement = ({ user }) => {
-  const categoryArray = useSelector(state => state.transaction.categoryArray);
-  const dispatch = useDispatch();
+  const [categories, setCategories] = useState([]);
+  const [showModal, setShowModal] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const [isLoading, setIsLoading] = useState(categoryArray.length === 0);
-  const [buttonLoading, setButtonLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (user) {
+      fetchCategories();
+    }
+  }, [user]);
 
   const fetchCategories = async () => {
     try {
-      const response = await api.Category.list(user?.sub);
+      setIsLoading(true);
+      const response = await api.Category.list(user.sub);
       if (response.status === 200) {
-        dispatch(setCategoryArray(response.data));
-        setIsLoading(false);
+        setCategories(response.data);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const handleAddCategory = async () => {
-    setButtonLoading(true);
+    if (!newCategory.trim()) return;
+    setSubmitting(true);
     try {
-      if (!newCategory) {
-        alert('Please enter a category name');
-        setButtonLoading(false);
-        return;
-      }
-
-      const response = await api.Category.insert({ userId: user?.sub, categoryName: newCategory });
+      const response = await api.Category.insert({
+        userId: user.sub,
+        categoryName: newCategory,
+      });
       if (response.status === 200) {
         setNewCategory('');
+        setShowModal(false);
         fetchCategories();
-        setButtonLoading(false);
       }
     } catch (error) {
-      console.error("status: ", error.response.status, "error text: ", error.response.data.error);
-      setButtonLoading(false);
+      console.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    try {
-      const response = await api.Category.delete({ userId: user?.sub, categoryId: categoryId });
-      if (response.status === 200) {
-        fetchCategories();
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      try {
+        const response = await api.Category.delete({
+          userId: user.sub,
+          categoryId: categoryId,
+        });
+        if (response.status === 200) {
+          fetchCategories();
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.log(error);
     }
   };
 
   return (
-    <div className="container">
-      <h2>Category Management</h2>
-      <Form className="mb-3">
-        <Form.Label>New Category</Form.Label>
-        <div className='row'>
-          <div className='col'>
-            <Form.Control
-              type="text"
+    <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Categories</h2>
+          <p className="text-muted-foreground">Organize your expenses with custom categories.</p>
+        </div>
+        <Button onClick={() => setShowModal(true)} className="self-start">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Category
+        </Button>
+      </div>
+
+      <Card className="card-shadow overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center">
+            <Tags className="w-4 h-4 mr-2" />
+            Active Categories
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-8 space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : categories.length > 0 ? (
+            <div className="divide-y divide-border">
+              {categories.map((category) => (
+                <div key={category._id} className="flex items-center justify-between p-4 px-6 hover:bg-muted/20 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Hash className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="font-medium">{category.categoryName}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDeleteCategory(category._id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-muted-foreground italic">
+              No categories found. Click "Add Category" to get started.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Modal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)}
+        title="Add New Category"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button onClick={handleAddCategory} disabled={submitting}>
+              {submitting ? 'Adding...' : 'Add Category'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Category Name</label>
+            <input 
+              type="text" 
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+              placeholder="e.g. Groceries, Rent, Travel"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
             />
           </div>
-          <div className='col-auto'>
-            {
-              buttonLoading ?
-                <Button variant="primary" disabled>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className='mr-2'
-                  />
-                  Adding Category...
-                </Button>
-                :
-                <Button variant="primary" onClick={handleAddCategory}>
-                  Add Category
-                </Button>
-            }
-          </div>
         </div>
-      </Form>
-      {
-        isLoading ?
-          <Skeleton className='skeleton-table-row' count={3} />
-          :
-          categoryArray.length !== 0 &&
-          <Table bordered hover>
-            <thead>
-              <tr>
-                <th>Category Name</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categoryArray.map((category) => (
-                <tr key={category._id}>
-                  <td>{category.categoryName}</td>
-                  <td>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDeleteCategory(category._id)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-      }
-    </div >
+      </Modal>
+    </div>
   );
 };
 
