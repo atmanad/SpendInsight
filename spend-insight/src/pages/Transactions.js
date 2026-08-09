@@ -11,7 +11,11 @@ import {
   PiggyBank,
   Filter,
   ArrowUpRight,
-  Receipt
+  Receipt,
+  Tag,
+  Layers,
+  DollarSign,
+  FileText
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import { format } from 'date-fns';
@@ -301,6 +305,7 @@ const Transactions = ({ user }) => {
         ]).filter(([_, items]) => items.length > 0)
       );
 
+  const selectedValueForLabel = labelArray.find(label => label?.labelName?.toLowerCase() == transaction?.label?.toLowerCase())
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -475,148 +480,241 @@ const Transactions = ({ user }) => {
       <Modal 
         isOpen={showIncomeModal} 
         onClose={() => { setShowIncomeModal(false); setIsEditing(false); setEditId(null); }}
-        title={isEditing ? "Edit Income" : "Add Income"}
+        title={
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-foreground">
+              {isEditing ? "Edit Income" : "Add Income"}
+            </span>
+          </div>
+        }
         footer={
-          <>
-            <Button variant="ghost" onClick={() => { setShowIncomeModal(false); setIsEditing(false); setEditId(null); }}>Cancel</Button>
-            <Button onClick={handleAddIncome} disabled={submitting}>
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <Button 
+              variant="ghost" 
+              onClick={() => { setShowIncomeModal(false); setIsEditing(false); setEditId(null); }}
+              className="px-4 py-2 text-sm font-medium rounded-xl hover:bg-muted/80"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddIncome} 
+              disabled={submitting}
+              className="px-5 py-2 text-sm font-medium rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200"
+            >
               {submitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Changes' : 'Add Income')}
             </Button>
-          </>
+          </div>
         }
       >
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Date</label>
-            <DatePicker 
-              selected={income.date} 
-              onChange={(date) => setIncome({...income, date})} 
-              className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
+        <div className="space-y-4 pt-1">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500" />
+                Date
+              </label>
+              <DatePicker 
+                selected={income.date} 
+                onChange={(date) => setIncome({...income, date})} 
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                Amount
+              </label>
+              <input 
+                type="number" 
+                name="amount" 
+                value={income.amount}
+                onChange={handleIncomeChange}
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm"
+                placeholder="0.00"
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Amount</label>
-            <input 
-              type="number" 
-              name="amount" 
-              value={income.amount}
-              onChange={handleIncomeChange}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-              placeholder="0.00"
-            />
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-emerald-500" />
+              Category
+            </label>
+            <div className="relative">
+              <select 
+                name="category" 
+                value={income.category} 
+                onChange={handleIncomeChange}
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
+              >
+                <option value="">Select Category</option>
+                <option value="Salary">Salary</option>
+                <option value="Bonus">Bonus</option>
+                <option value="Gifts">Gifts</option>
+                <option value="Freelancing">Freelancing</option>
+                <option value="Other">Other</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                <ChevronRight className="w-4 h-4 rotate-90" />
+              </div>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Category</label>
-            <select 
-              name="category" 
-              value={income.category} 
-              onChange={handleIncomeChange}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-            >
-              <option value="">Select Category</option>
-              <option value="Salary">Salary</option>
-              <option value="Bonus">Bonus</option>
-              <option value="Gifts">Gifts</option>
-              <option value="Freelancing">Freelancing</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Notes</label>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-emerald-500" />
+              Notes
+            </label>
             <textarea 
               name="notes" 
               value={income.notes}
               onChange={handleIncomeChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none min-h-[80px]"
-              placeholder="Add some notes..."
+              className="w-full rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm min-h-[90px] resize-none"
+              placeholder="Add some notes about this income..."
             />
           </div>
         </div>
       </Modal>
 
-      <Modal 
-        isOpen={showModal} 
+      <Modal
+        isOpen={showModal}
         onClose={() => { setShowModal(false); setIsEditing(false); setEditId(null); }}
-        title={isEditing ? "Edit Transaction" : "Add Transaction"}
+        title={
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-foreground">
+              {isEditing ? "Edit Transaction" : "Add Transaction"}
+            </span>
+          </div>
+        }
         footer={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-                <input 
-                    type="checkbox" 
-                    id="keepOpen" 
-                    checked={keepOpen} 
-                    onChange={() => setKeepOpen(!keepOpen)} 
-                    className="rounded border-input text-primary focus:ring-primary"
-                />
-                <label htmlFor="keepOpen" className="text-sm text-muted-foreground">Keep open</label>
+              <input 
+                type="checkbox" 
+                id="keepOpen" 
+                checked={keepOpen} 
+                onChange={() => setKeepOpen(!keepOpen)} 
+                className="w-4 h-4 rounded border-input text-primary focus:ring-primary accent-primary cursor-pointer"
+              />
+              <label htmlFor="keepOpen" className="text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer select-none">
+                Keep open
+              </label>
             </div>
-            <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => { setShowModal(false); setIsEditing(false); setEditId(null); }}>Cancel</Button>
-                <Button onClick={handleAddTransaction} disabled={submitting}>
-                    {submitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Transaction' : 'Add Transaction')}
-                </Button>
+            <div className="flex items-center gap-2.5">
+              <Button 
+                variant="ghost" 
+                onClick={() => { setShowModal(false); setIsEditing(false); setEditId(null); }}
+                className="px-4 py-2 text-sm font-medium rounded-xl hover:bg-muted/80"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddTransaction} 
+                disabled={submitting}
+                className="px-5 py-2 text-sm font-medium rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-200"
+              >
+                {submitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Transaction' : 'Add Transaction')}
+              </Button>
             </div>
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-4 pt-1">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-                <label className="text-sm font-medium">Category</label>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                Category
+              </label>
+              <div className="relative">
                 <select 
-                name="category" 
-                value={transaction.category} 
-                onChange={handleChange}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                  name="category" 
+                  value={transaction.category} 
+                  onChange={handleChange}
+                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
                 >
-                <option value="">Select Category</option>
-                {categoryArray.map((cat) => (
+                  <option value="">Select Category</option>
+                  {categoryArray.map((cat) => (
                     <option key={cat._id} value={cat.categoryName}>{cat.categoryName}</option>
-                ))}
+                  ))}
                 </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                  <ChevronRight className="w-4 h-4 rotate-90" />
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-                <label className="text-sm font-medium">Label</label>
-                <select 
-                name="label" 
-                value={transaction.label} 
-                onChange={handleChange}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-primary" />
+                Label
+              </label>
+              <div className="relative">
+                <select
+                  name="label"
+                  value={selectedValueForLabel?.labelName || ''}
+                  onChange={handleChange}
+                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
                 >
-                <option value="">Select Label</option>
-                {labelArray.map((lbl) => (
+                  <option value="">Select Label</option>
+                  {labelArray.map((lbl) => (
                     <option key={lbl._id} value={lbl.labelName}>{lbl.labelName}</option>
-                ))}
+                  ))}
                 </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                  <ChevronRight className="w-4 h-4 rotate-90" />
+                </div>
+              </div>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Date</label>
-            <DatePicker 
-              selected={selectedDate} 
-              onChange={(date) => dispatch(setSelectedDate(date))} 
-              className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-            />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                Date
+              </label>
+              <DatePicker 
+                selected={selectedDate} 
+                onChange={(date) => dispatch(setSelectedDate(date))} 
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-primary" />
+                Amount
+              </label>
+              <input 
+                type="number" 
+                name="amount" 
+                value={transaction.amount}
+                onChange={handleChange}
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-semibold focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
+                placeholder="0.00"
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Amount</label>
-            <input 
-              type="number" 
-              name="amount" 
-              value={transaction.amount}
-              onChange={handleChange}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-              placeholder="0.00"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium">Notes</label>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-primary" />
+              Notes
+            </label>
             <textarea 
               name="notes" 
               value={transaction.notes}
               onChange={handleChange}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none min-h-[80px]"
-              placeholder="Add some notes..."
+              className="w-full rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm min-h-[90px] resize-none"
+              placeholder="Add some notes about this transaction..."
             />
           </div>
         </div>
