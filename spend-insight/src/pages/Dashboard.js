@@ -108,7 +108,7 @@ const Dashboard = ({ user }) => {
 
   const KPI_CARDS = [
     { title: 'Total Balance', value: totalBalance, icon: Wallet, color: 'text-primary' },
-    { title: 'Monthly Savings', value: monthlySavings, icon: PiggyBank, color: 'text-emerald-500' },
+    { title: 'Monthly Savings', value: monthlySavings, icon: PiggyBank, color: monthlySavings < 0 ? 'text-destructive' : 'text-emerald-500' },
     { title: 'Monthly Income', value: monthlyIncome, icon: TrendingUp, color: 'text-emerald-500' },
     { title: 'Monthly Expenses', value: totalExpense, icon: TrendingDown, color: 'text-destructive' },
   ];
@@ -160,7 +160,7 @@ const Dashboard = ({ user }) => {
               <card.icon className={cn("w-4 h-4", card.color)} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className={cn("text-2xl font-bold", card.value < 0 && "text-destructive")}>
                 {card.value < 0 ? '-' : ''}₹{Math.abs(card.value).toLocaleString()}
               </div>
             </CardContent>

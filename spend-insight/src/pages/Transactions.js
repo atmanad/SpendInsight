@@ -227,7 +227,8 @@ const Transactions = ({ user }) => {
         date: selectedDate.toISOString().substring(0, 10),
         amount: transaction.amount,
         notes: transaction.notes,
-        label: transaction.label
+        label: transaction.label,
+        keywords: transaction.keywords || []
       };
 
       let response;
@@ -243,7 +244,7 @@ const Transactions = ({ user }) => {
       }
 
       if (response.status === 200) {
-        setTransaction({ category: '', amount: '', notes: '', label: '' });
+        setTransaction({ category: '', amount: '', notes: '', label: '', keywords: [] });
         fetchTransactions(selectedMonth);
         if (!keepOpen) {
           setShowModal(false);
@@ -263,7 +264,8 @@ const Transactions = ({ user }) => {
       category: item.category,
       amount: item.amount,
       notes: item.notes,
-      label: item.label || ''
+      label: item.label || '',
+      keywords: item.keywords || []
     });
     dispatch(setSelectedDate(new Date(item.date)));
     setEditId(item._id);
@@ -285,7 +287,7 @@ const Transactions = ({ user }) => {
 
   const KPI_CARDS = [
     { title: 'Balance', value: totalBalance, icon: Wallet, color: 'text-primary' },
-    { title: 'Savings', value: monthlySavings, icon: PiggyBank, color: 'text-emerald-500' },
+    { title: 'Savings', value: monthlySavings, icon: PiggyBank, color: monthlySavings < 0 ? 'text-destructive' : 'text-emerald-500' },
     { title: 'Income', value: monthlyIncome, icon: TrendingUp, color: 'text-emerald-500' },
     { title: 'Expenses', value: totalExpense, icon: TrendingDown, color: 'text-destructive' },
   ];
@@ -359,8 +361,8 @@ const Transactions = ({ user }) => {
               <card.icon className={cn("w-3.5 h-3.5", card.color)} />
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="text-xl font-bold">
-                ₹{Math.abs(card.value).toLocaleString()}
+              <div className={cn("text-xl font-bold", card.value < 0 && "text-destructive")}>
+                {card.value < 0 ? '-' : ''}₹{Math.abs(card.value).toLocaleString()}
               </div>
             </CardContent>
           </Card>
