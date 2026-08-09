@@ -31,13 +31,22 @@ const Dashboard = ({ user }) => {
 
   const labelTotals = useMemo(() => {
     const totals = {};
+    let total = 0;
     transactions.forEach((transaction) => {
       const { label, amount } = transaction;
       if (label) {
-        totals[label] = (totals[label] || 0) + amount;
+        // Normalize to lowercase so "Personal" and "personal" are treated as the same label
+        const normalizedLabel = label.trim().toLowerCase();
+        totals[normalizedLabel] = (totals[normalizedLabel] || 0) + amount;
+        total += amount;
       }
     });
-    return Object.entries(totals).map(([name, value]) => ({ name, value }));
+    return Object.entries(totals).map(([name, value]) => ({
+      // Display with title case (e.g. "personal" → "Personal")
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value,
+      percent: total !== 0 ? (value / total) * 100 : 0,
+    })).sort((a, b) => b.value - a.value);
   }, [transactions]);
 
   const categoryTotals = useMemo(() => {
@@ -85,7 +94,7 @@ const Dashboard = ({ user }) => {
   }
 
   const COLORS = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
     '#ec4899', '#06b6d4', '#475569', '#14b8a6', '#f43f5e'
   ];
 
@@ -114,21 +123,20 @@ const Dashboard = ({ user }) => {
   ];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">Monitor your spending and income trends.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Monitor your spending and income trends.</h2>
         </div>
-        
-        <div className="flex items-center gap-2 bg-card border border-border p-1 rounded-lg self-start">
+
+        <div className="flex items-center gap-2 bg-card border border-border p-1 rounded-lg w-full md:w-auto">
           <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <div className="relative">
-            <Button 
-              variant="ghost" 
-              className="px-3 py-1 font-medium min-w-[140px]"
+          <div className="relative flex-1">
+            <Button
+              variant="ghost"
+              className="w-full px-3 py-1 font-medium"
               onClick={() => setCalendarVisible(!isCalendarVisible)}
             >
               <CalendarIcon className="w-4 h-4 mr-2 text-primary" />
@@ -190,10 +198,10 @@ const Dashboard = ({ user }) => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: 'none', 
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: 'none',
                       boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                       backgroundColor: 'hsl(var(--card))',
                       color: 'hsl(var(--card-foreground))'
@@ -201,7 +209,7 @@ const Dashboard = ({ user }) => {
                     itemStyle={{ color: 'hsl(var(--primary))' }}
                     formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
                   />
-                  <Legend verticalAlign="bottom" height={36}/>
+                  <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -238,8 +246,89 @@ const Dashboard = ({ user }) => {
                     ))
                   ) : (
                     <tr>
-                    <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground italic">No transactions found</td>
+                      <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground italic">No transactions found</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Label Analytics Section */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle>Spending by Label</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[350px] flex items-center justify-center">
+            {labelTotals.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={labelTotals}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {labelTotals.map((entry, index) => (
+                      <Cell key={`cell-label-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: 'none',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      backgroundColor: 'hsl(var(--card))',
+                      color: 'hsl(var(--card-foreground))'
+                    }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                    formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground italic">No data for this month</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="card-shadow overflow-hidden">
+          <CardHeader>
+            <CardTitle>Label Analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-6 py-3 text-left font-semibold text-muted-foreground uppercase">Label</th>
+                    <th className="px-6 py-3 text-center font-semibold text-muted-foreground uppercase">%</th>
+                    <th className="px-6 py-3 text-right font-semibold text-muted-foreground uppercase">Amount</th>
                   </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {labelTotals.length > 0 ? (
+                    labelTotals.map((item, index) => (
+                      <tr key={item.name} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4 flex items-center">
+                          <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                          <span className="font-medium">{item.name}</span>
+                        </td>
+                        <td className="px-6 py-4 text-center text-muted-foreground">{item.percent.toFixed(1)}%</td>
+                        <td className="px-6 py-4 text-right font-semibold">₹{item.value.toLocaleString()}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground italic">No labeled transactions found</td>
+                    </tr>
                   )}
                 </tbody>
               </table>

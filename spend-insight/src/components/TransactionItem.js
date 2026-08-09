@@ -93,13 +93,13 @@ const TransactionItem = ({ category, label, amount, notes, id, fetchTransactions
         <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full ${config.bg} ${config.text} flex items-center justify-center shrink-0 shadow-xs`}>
           <CategoryIcon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
-        
+
         {/* Title, Tag, Subtitle */}
         <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-bold text-foreground text-xs sm:text-sm leading-snug truncate">{category}</span>
             {label && (
-              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200/40 dark:border-blue-800/40 shrink-0">
+              <span className="text-[8px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-200/40 dark:border-blue-800/40 shrink-0">
                 {label}
               </span>
             )}

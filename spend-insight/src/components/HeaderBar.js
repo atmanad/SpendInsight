@@ -27,13 +27,13 @@ const HeaderBar = ({ onOpenMobile, isDarkMode, toggleDarkMode, user }) => {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-6 bg-card/80 backdrop-blur-md border-b border-border transition-colors duration-300">
       <div className="flex items-center gap-3">
-        <button
+        {/* <button
           onClick={onOpenMobile}
           className="p-2 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden focus:outline-none focus:ring-2 focus:ring-primary/20"
           aria-label="Open navigation menu"
         >
           <Menu className="w-6 h-6" />
-        </button>
+        </button> */}
 
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 md:hidden">

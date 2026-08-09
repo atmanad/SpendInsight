@@ -71,8 +71,7 @@ const CategoryManagement = ({ user }) => {
     <div className="space-y-8 max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Categories</h2>
-          <p className="text-muted-foreground">Organize your expenses with custom categories.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Organize your expenses with custom categories.</h2>
         </div>
         <Button onClick={() => setShowModal(true)} className="self-start">
           <Plus className="w-4 h-4 mr-2" />
@@ -104,9 +103,9 @@ const CategoryManagement = ({ user }) => {
                     </div>
                     <span className="font-medium">{category.categoryName}</span>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleDeleteCategory(category._id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                   >
@@ -123,8 +122,8 @@ const CategoryManagement = ({ user }) => {
         </CardContent>
       </Card>
 
-      <Modal 
-        isOpen={showModal} 
+      <Modal
+        isOpen={showModal}
         onClose={() => setShowModal(false)}
         title="Add New Category"
         footer={
@@ -139,8 +138,8 @@ const CategoryManagement = ({ user }) => {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Category Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
               className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"

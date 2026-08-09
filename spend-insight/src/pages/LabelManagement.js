@@ -71,8 +71,7 @@ const LabelManagement = ({ user }) => {
     <div className="space-y-8 max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Labels</h2>
-          <p className="text-muted-foreground">Add extra context to your transactions with labels.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Add extra context to your transactions with labels.</h2>
         </div>
         <Button onClick={() => setShowModal(true)} className="self-start">
           <Plus className="w-4 h-4 mr-2" />
@@ -104,9 +103,9 @@ const LabelManagement = ({ user }) => {
                     </div>
                     <span className="font-medium">{label.labelName}</span>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleDeleteLabel(label._id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                   >
@@ -123,8 +122,8 @@ const LabelManagement = ({ user }) => {
         </CardContent>
       </Card>
 
-      <Modal 
-        isOpen={showModal} 
+      <Modal
+        isOpen={showModal}
         onClose={() => setShowModal(false)}
         title="Add New Label"
         footer={
@@ -139,8 +138,8 @@ const LabelManagement = ({ user }) => {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Label Name</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
               className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
