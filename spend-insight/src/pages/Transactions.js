@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Plus, 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
   PiggyBank,
   Filter,
   ArrowUpRight,
@@ -23,18 +23,18 @@ import { groupBy } from 'lodash';
 import api from '../api/api';
 import TransactionItem from '../components/TransactionItem.js';
 import IncomeItem from '../components/IncomeItem';
-import { 
-  setSavings, 
-  setSortedIncomes, 
-  setSortedTransactions, 
-  setMonthlyIncome, 
-  setTransactions, 
-  setCurrentMonth, 
-  setBalance, 
-  setSelectedDate, 
-  setIncomeArray, 
-  setCategoryArray, 
-  setLabelArray 
+import {
+  setSavings,
+  setSortedIncomes,
+  setSortedTransactions,
+  setMonthlyIncome,
+  setTransactions,
+  setCurrentMonth,
+  setBalance,
+  setSelectedDate,
+  setIncomeArray,
+  setCategoryArray,
+  setLabelArray
 } from '../store/transactionSlice';
 import { Card, CardContent, CardHeader, CardTitle, Button } from '../components/ui';
 import Modal from '../components/ui/Modal';
@@ -42,7 +42,7 @@ import { cn } from '../components/ui';
 
 const Transactions = ({ user }) => {
   const dispatch = useDispatch();
-  
+
   const selectedMonth = useSelector(state => state.transaction.selectedMonth);
   const totalBalance = useSelector(state => state.transaction.balance);
   const selectedDate = useSelector(state => state.transaction.selectedDate);
@@ -66,6 +66,7 @@ const Transactions = ({ user }) => {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [isFabOpen, setIsFabOpen] = useState(false);
 
   const [income, setIncome] = useState({
     date: new Date(),
@@ -180,14 +181,14 @@ const Transactions = ({ user }) => {
         notes: income.notes,
         category: income.category
       };
-      
+
       let response;
       if (isEditing) {
-        response = await api.Income.update({ 
-          userId: user.sub, 
-          incomeId: editId, 
+        response = await api.Income.update({
+          userId: user.sub,
+          incomeId: editId,
           income: incomeData,
-          date: incomeData.date // Adding date context for backend if needed
+          date: incomeData.date
         });
       } else {
         response = await api.Income.insert({ userId: user.sub, income: incomeData });
@@ -237,11 +238,11 @@ const Transactions = ({ user }) => {
 
       let response;
       if (isEditing) {
-        response = await api.Transaction.update({ 
-          userId: user.sub, 
-          transactionId: editId, 
+        response = await api.Transaction.update({
+          userId: user.sub,
+          transactionId: editId,
           transaction: transactionData,
-          date: transactionData.date // Adding date context for backend
+          date: transactionData.date
         });
       } else {
         response = await api.Transaction.insert({ userId: user.sub, transaction: transactionData });
@@ -290,42 +291,46 @@ const Transactions = ({ user }) => {
   };
 
   const KPI_CARDS = [
-    { title: 'Balance', value: totalBalance, icon: Wallet, color: 'text-primary' },
-    { title: 'Savings', value: monthlySavings, icon: PiggyBank, color: monthlySavings < 0 ? 'text-destructive' : 'text-emerald-500' },
-    { title: 'Income', value: monthlyIncome, icon: TrendingUp, color: 'text-emerald-500' },
-    { title: 'Expenses', value: totalExpense, icon: TrendingDown, color: 'text-destructive' },
+    { title: 'Balance', value: totalBalance, icon: Wallet, color: 'text-blue-600 dark:text-blue-400', bgIcon: 'bg-blue-50 dark:bg-blue-950/50' },
+    { title: 'Savings', value: monthlySavings, icon: PiggyBank, color: monthlySavings < 0 ? 'text-red-500' : 'text-emerald-500', bgIcon: 'bg-red-50 dark:bg-red-950/50' },
+    { title: 'Income', value: monthlyIncome, icon: TrendingUp, color: 'text-emerald-500', bgIcon: 'bg-emerald-50 dark:bg-emerald-950/50' },
+    { title: 'Expenses', value: totalExpense, icon: TrendingDown, color: 'text-red-500', bgIcon: 'bg-red-50 dark:bg-red-950/50' },
   ];
 
-  const filteredTransactions = filterCategory === 'All' 
-    ? groupedSortedTransactions 
+  const filteredTransactions = filterCategory === 'All'
+    ? groupedSortedTransactions
     : Object.fromEntries(
-        Object.entries(groupedSortedTransactions).map(([date, items]) => [
-          date,
-          items.filter(item => item.category === filterCategory)
-        ]).filter(([_, items]) => items.length > 0)
-      );
+      Object.entries(groupedSortedTransactions).map(([date, items]) => [
+        date,
+        items.filter(item => item.category === filterCategory)
+      ]).filter(([_, items]) => items.length > 0)
+    );
 
-  const selectedValueForLabel = labelArray.find(label => label?.labelName?.toLowerCase() == transaction?.label?.toLowerCase())
+  const selectedValueForLabel = labelArray.find(label => label?.labelName?.toLowerCase() === transaction?.label?.toLowerCase());
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+
+      {/* DESKTOP HEADER & CONTROLS */}
+      <div className="hidden md:flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Transactions</h2>
-          <p className="text-muted-foreground">Manage your detailed income and expense history.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground">Transactions</h2>
+          <p className="text-sm text-muted-foreground mt-1">Manage your detailed income and expense history.</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 bg-card border border-border p-1 rounded-lg">
-            <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
+        <div className="flex items-center gap-3">
+          {/* Month Switcher Chip */}
+          <div className="flex items-center gap-1 bg-card border border-border/80 p-1 rounded-xl shadow-xs">
+            <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-8 w-8 rounded-lg">
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <div className="relative">
-              <Button 
-                variant="ghost" 
-                className="px-3 py-1 font-medium min-w-[140px]"
+              <Button
+                variant="ghost"
+                className="px-3 py-1 font-semibold text-sm min-w-[140px] h-8 rounded-lg"
                 onClick={() => setCalendarVisible(!isCalendarVisible)}
               >
-                <CalendarIcon className="w-4 h-4 mr-2 text-primary" />
+                <CalendarIcon className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" />
                 {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
               </Button>
               {isCalendarVisible && (
@@ -340,33 +345,42 @@ const Transactions = ({ user }) => {
                 </div>
               )}
             </div>
-            <Button variant="ghost" size="icon" onClick={goToNextMonth}>
+            <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-8 w-8 rounded-lg">
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button onClick={() => { setIsEditing(false); setShowIncomeModal(true); }} variant="outline" size="sm" className="hidden sm:flex">
-                <ArrowUpRight className="w-4 h-4 mr-2 text-emerald-500" />
-                Add Income
-            </Button>
-            <Button onClick={() => { setIsEditing(false); setShowModal(true); }} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Transaction
-            </Button>
-          </div>
+          <Button
+            onClick={() => { setIsEditing(false); setShowIncomeModal(true); }}
+            variant="outline"
+            className="rounded-xl border-blue-600/30 text-blue-600 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-950/30 font-semibold h-10 px-4"
+          >
+            <ArrowUpRight className="w-4 h-4 mr-1.5" />
+            Add Income
+          </Button>
+
+          <Button
+            onClick={() => { setIsEditing(false); setShowModal(true); }}
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-600/20 h-10 px-4"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Add Transaction
+          </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      {/* DESKTOP STAT CARDS GRID */}
+      <div className="hidden md:grid gap-4 grid-cols-2 lg:grid-cols-4">
         {KPI_CARDS.map((card) => (
-          <Card key={card.title} className="card-shadow">
+          <Card key={card.title} className="rounded-2xl border border-border/60 shadow-xs bg-card hover:border-border transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-1 px-4 pt-4">
-              <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{card.title}</CardTitle>
-              <card.icon className={cn("w-3.5 h-3.5", card.color)} />
+              <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{card.title}</CardTitle>
+              <div className={`w-8 h-8 rounded-full ${card.bgIcon} flex items-center justify-center`}>
+                <card.icon className={cn("w-4 h-4", card.color)} />
+              </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className={cn("text-xl font-bold", card.value < 0 && "text-destructive")}>
+              <div className={cn("text-2xl font-bold tracking-tight", card.value < 0 && "text-red-600 dark:text-red-400")}>
                 {card.value < 0 ? '-' : ''}₹{Math.abs(card.value).toLocaleString()}
               </div>
             </CardContent>
@@ -374,34 +388,118 @@ const Transactions = ({ user }) => {
         ))}
       </div>
 
-      <div className="grid gap-8">
-        <Card className="card-shadow overflow-hidden">
-          <CardHeader className="bg-muted/30 border-b border-border py-4 px-6 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">History</CardTitle>
+      {/* MOBILE HERO CARD (Total Balance + 3 Subcards: Savings, Income, Expenses) */}
+      <div className="block md:hidden">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 rounded-3xl p-3 text-white shadow-xl shadow-blue-600/25 relative overflow-hidden">
+          {/* Top section inside hero card */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-widest uppercase text-blue-100/90">Total Balance</span>
+            <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <Wallet className="w-5 h-5 text-white" />
+            </div>
+          </div>
+
+          <div className="mt-2 text-3xl font-extrabold tracking-tight">
+            ₹{totalBalance.toLocaleString()}
+          </div>
+
+          {/* 3 Subcards Grid (Savings, Income, Expenses) */}
+          <div className="grid grid-cols-3 gap-2.5 mt-5">
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-2.5">
+              <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-blue-100">
+                <span>Savings</span>
+                <TrendingDown className="w-3.5 h-3.5 text-red-300" />
+              </div>
+              <div className="text-sm font-bold mt-1 text-white truncate">
+                {monthlySavings < 0 ? '-' : ''}₹{Math.abs(monthlySavings).toLocaleString()}
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-2.5">
+              <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-blue-100">
+                <span>Income</span>
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+              </div>
+              <div className="text-sm font-bold mt-1 text-white truncate">
+                ₹{monthlyIncome.toLocaleString()}
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-2.5">
+              <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-blue-100">
+                <span>Expenses</span>
+                <TrendingDown className="w-3.5 h-3.5 text-red-300" />
+              </div>
+              <div className="text-sm font-bold mt-1 text-white truncate">
+                ₹{totalExpense.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* HISTORY CONTAINER CARD & LIST */}
+      <Card className="rounded-2xl border border-border/60 shadow-xs overflow-hidden bg-card">
+        <CardHeader className="bg-muted/20 border-b border-border/60 py-3.5 px-4 md:px-6 flex flex-row items-center justify-between">
+          <CardTitle className="text-lg font-bold text-foreground">History</CardTitle>
+
+          {/* Month Switcher for Mobile & Filter for both */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Month Switcher Chip */}
+            <div className="flex md:hidden items-center bg-background border border-border rounded-xl px-1 py-0.5 shadow-xs">
+              <Button variant="ghost" size="icon" onClick={goToPreviousMonth} className="h-7 w-7">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Button>
+              <div className="relative">
+                <button
+                  className="px-1.5 py-1 text-xs font-bold text-foreground flex items-center gap-1"
+                  onClick={() => setCalendarVisible(!isCalendarVisible)}
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 text-blue-600" />
+                  {selectedMonth.toLocaleString('default', { month: 'short', year: '2-digit' })}
+                </button>
+                {isCalendarVisible && (
+                  <div className="absolute top-full mt-2 right-0 z-[100] bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                    <DatePicker
+                      selected={selectedMonth}
+                      onChange={(date) => { dispatch(setCurrentMonth(date)); setCalendarVisible(false); }}
+                      dateFormat="MMMM yyyy"
+                      showMonthYearPicker
+                      inline
+                    />
+                  </div>
+                )}
+              </div>
+              <Button variant="ghost" size="icon" onClick={goToNextMonth} className="h-7 w-7">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
+            {/* Filter Dropdown Toggle */}
             <div className="relative">
-              <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={cn("text-muted-foreground", filterCategory !== 'All' && "text-primary")}
-                  onClick={() => setIsFilterVisible(!isFilterVisible)}
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn("h-8 rounded-xl text-xs font-semibold text-muted-foreground border border-border/60", filterCategory !== 'All' && "text-blue-600 border-blue-600/30 bg-blue-50 dark:bg-blue-950/40")}
+                onClick={() => setIsFilterVisible(!isFilterVisible)}
               >
-                  <Filter className="w-4 h-4 mr-2" />
-                  {filterCategory === 'All' ? 'Filter' : filterCategory}
+                <Filter className="w-3.5 h-3.5 mr-1.5" />
+                {filterCategory === 'All' ? 'Filter' : filterCategory}
               </Button>
               {isFilterVisible && (
-                <div className="absolute right-0 top-full mt-2 z-[100] bg-card border border-border rounded-xl shadow-xl p-2 min-w-[200px] animate-in fade-in zoom-in slide-in-from-top-2">
-                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">Filter by Category</div>
+                <div className="absolute right-0 top-full mt-2 z-[100] bg-card border border-border rounded-2xl shadow-xl p-2 min-w-[200px] animate-in fade-in zoom-in slide-in-from-top-2">
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3 pt-1">Filter by Category</div>
                   <div className="space-y-1">
-                    <button 
-                      className={cn("w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors", filterCategory === 'All' && "bg-primary/10 text-primary")}
+                    <button
+                      className={cn("w-full text-left px-3 py-1.5 text-xs font-semibold rounded-xl hover:bg-muted transition-colors", filterCategory === 'All' && "bg-blue-600/10 text-blue-600 font-bold")}
                       onClick={() => { setFilterCategory('All'); setIsFilterVisible(false); }}
                     >
                       All Categories
                     </button>
                     {categoryArray.map(cat => (
-                      <button 
+                      <button
                         key={cat._id}
-                        className={cn("w-full text-left px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors", filterCategory === cat.categoryName && "bg-primary/10 text-primary")}
+                        className={cn("w-full text-left px-3 py-1.5 text-xs font-semibold rounded-xl hover:bg-muted transition-colors", filterCategory === cat.categoryName && "bg-blue-600/10 text-blue-600 font-bold")}
                         onClick={() => { setFilterCategory(cat.categoryName); setIsFilterVisible(false); }}
                       >
                         {cat.categoryName}
@@ -411,74 +509,139 @@ const Transactions = ({ user }) => {
                 </div>
               )}
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-8 space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center gap-4 animate-pulse">
-                    <div className="bg-muted rounded-lg w-10 h-10" />
-                    <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-muted rounded w-1/4" />
-                        <div className="h-3 bg-muted rounded w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-                <div className="divide-y divide-border">
-                  {Object.keys(groupedSortedIncomes).length === 0 && Object.keys(filteredTransactions).length === 0 && (
-                    <div className="p-12 text-center text-muted-foreground italic flex flex-col items-center">
-                        <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
-                            <Receipt className="w-8 h-8 opacity-20" />
-                        </div>
-                        No records found for this month.
-                    </div>
-                  )}
-                  
-                  {Object.keys(groupedSortedIncomes).map(date => (
-                    <div key={`income-${date}`}>
-                      {groupedSortedIncomes[date].map(item => (
-                        <IncomeItem 
-                          key={item._id} 
-                          {...item} 
-                          id={item._id}
-                          userId={user?.sub} 
-                          fetchMonthlyIncome={() => fetchTransactions(selectedMonth)} 
-                          selectedMonth={selectedMonth} 
-                          onEdit={() => handleEditIncome(item)}
-                        />
-                      ))}
-                    </div>
-                  ))}
+          </div>
+        </CardHeader>
 
-                  {/* Render Transactions grouped by date */}
-                {Object.keys(filteredTransactions).map(date => (
-                  <div key={date}>
-                    <div className="bg-muted/30 px-6 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-y border-border/50">
-                      {date}
-                    </div>
-                    {filteredTransactions[date].map(item => (
-                      <TransactionItem 
-                        key={item._id} 
-                        {...item} 
-                        id={item._id}
-                        userId={user?.sub} 
-                        fetchTransactions={fetchTransactions} 
-                        selectedMonth={selectedMonth} 
-                        onEdit={() => handleEditTransaction(item)}
-                      />
-                    ))}
+        <CardContent className="p-3 md:p-6">
+          {isLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-4 animate-pulse">
+                  <div className="bg-muted rounded-full w-11 h-11" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/4" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
                   </div>
-                ))}
                 </div>
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.keys(groupedSortedIncomes).length === 0 && Object.keys(filteredTransactions).length === 0 && (
+                <div className="p-12 text-center text-muted-foreground italic flex flex-col items-center">
+                  <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                    <Receipt className="w-8 h-8 opacity-30 text-blue-600" />
+                  </div>
+                  <p className="font-medium text-sm">No transaction records found for this month.</p>
+                </div>
+              )}
+
+              {/* Render Income items grouped by date */}
+              {Object.keys(groupedSortedIncomes).map(date => (
+                <div key={`income-${date}`}>
+                  <div className="flex items-center gap-3 my-3">
+                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase shrink-0">
+                      {date}
+                    </span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                  {groupedSortedIncomes[date].map(item => (
+                    <IncomeItem
+                      key={item._id}
+                      {...item}
+                      id={item._id}
+                      userId={user?.sub}
+                      fetchMonthlyIncome={() => fetchTransactions(selectedMonth)}
+                      selectedMonth={selectedMonth}
+                      onEdit={() => handleEditIncome(item)}
+                    />
+                  ))}
+                </div>
+              ))}
+
+              {/* Render Transactions grouped by date */}
+              {Object.keys(filteredTransactions).map(date => (
+                <div key={date}>
+                  <div className="flex items-center gap-3 my-3">
+                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase shrink-0">
+                      {date}
+                    </span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                  {filteredTransactions[date].map(item => (
+                    <TransactionItem
+                      key={item._id}
+                      {...item}
+                      id={item._id}
+                      userId={user?.sub}
+                      fetchTransactions={fetchTransactions}
+                      selectedMonth={selectedMonth}
+                      onEdit={() => handleEditTransaction(item)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* MOBILE SPEED DIAL FLOATING ACTION BUTTON */}
+      <div className="fixed bottom-20 right-4 z-40 md:hidden flex flex-col items-end gap-2.5">
+        {/* Backdrop trigger overlay when open */}
+        {isFabOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs z-30 md:hidden"
+            onClick={() => setIsFabOpen(false)}
+          />
+        )}
+
+        {/* Speed Dial Options */}
+        {isFabOpen && (
+          <div className="flex flex-col items-end gap-2.5 z-40 mb-1 animate-in fade-in slide-in-from-bottom-3 duration-200">
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setShowIncomeModal(true);
+                setIsFabOpen(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 active:scale-95 transition-all"
+            >
+              <span>Add Income</span>
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => {
+                setIsEditing(false);
+                setShowModal(true);
+                setIsFabOpen(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg shadow-blue-600/30 active:scale-95 transition-all"
+            >
+              <span>Add Expense</span>
+              <Receipt className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Main Floating Trigger Button */}
+        <button
+          onClick={() => setIsFabOpen(!isFabOpen)}
+          className={`z-40 rounded-full w-14 h-14 shadow-xl flex items-center justify-center transition-all duration-300 active:scale-95 ${isFabOpen
+            ? 'bg-slate-800 text-white shadow-slate-900/40 rotate-45'
+            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30'
+            }`}
+          aria-label="Toggle actions"
+          title="Add Income or Expense"
+        >
+          <Plus className="w-7 h-7 transition-transform duration-300" />
+        </button>
       </div>
 
-      <Modal 
-        isOpen={showIncomeModal} 
+      {/* ADD / EDIT INCOME MODAL */}
+      <Modal
+        isOpen={showIncomeModal}
         onClose={() => { setShowIncomeModal(false); setIsEditing(false); setEditId(null); }}
         title={
           <div className="flex items-center gap-2.5">
@@ -492,15 +655,15 @@ const Transactions = ({ user }) => {
         }
         footer={
           <div className="flex items-center justify-end gap-2.5 w-full">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => { setShowIncomeModal(false); setIsEditing(false); setEditId(null); }}
               className="px-4 py-2 text-sm font-medium rounded-xl hover:bg-muted/80"
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleAddIncome} 
+            <Button
+              onClick={handleAddIncome}
               disabled={submitting}
               className="px-5 py-2 text-sm font-medium rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200"
             >
@@ -516,9 +679,9 @@ const Transactions = ({ user }) => {
                 <CalendarIcon className="w-3.5 h-3.5 text-emerald-500" />
                 Date
               </label>
-              <DatePicker 
-                selected={income.date} 
-                onChange={(date) => setIncome({...income, date})} 
+              <DatePicker
+                selected={income.date}
+                onChange={(date) => setIncome({ ...income, date })}
                 className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm"
               />
             </div>
@@ -528,9 +691,9 @@ const Transactions = ({ user }) => {
                 <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
                 Amount
               </label>
-              <input 
-                type="number" 
-                name="amount" 
+              <input
+                type="number"
+                name="amount"
                 value={income.amount}
                 onChange={handleIncomeChange}
                 className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm"
@@ -545,9 +708,9 @@ const Transactions = ({ user }) => {
               Category
             </label>
             <div className="relative">
-              <select 
-                name="category" 
-                value={income.category} 
+              <select
+                name="category"
+                value={income.category}
                 onChange={handleIncomeChange}
                 className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
               >
@@ -569,8 +732,8 @@ const Transactions = ({ user }) => {
               <FileText className="w-3.5 h-3.5 text-emerald-500" />
               Notes
             </label>
-            <textarea 
-              name="notes" 
+            <textarea
+              name="notes"
               value={income.notes}
               onChange={handleIncomeChange}
               className="w-full rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all shadow-sm min-h-[90px] resize-none"
@@ -580,12 +743,13 @@ const Transactions = ({ user }) => {
         </div>
       </Modal>
 
+      {/* ADD / EDIT TRANSACTION MODAL */}
       <Modal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setIsEditing(false); setEditId(null); }}
         title={
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <div className="p-2 rounded-xl bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
               <Receipt className="w-5 h-5" />
             </div>
             <span className="font-semibold text-foreground">
@@ -596,31 +760,31 @@ const Transactions = ({ user }) => {
         footer={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                id="keepOpen" 
-                checked={keepOpen} 
-                onChange={() => setKeepOpen(!keepOpen)} 
-                className="w-4 h-4 rounded border-input text-primary focus:ring-primary accent-primary cursor-pointer"
+              <input
+                type="checkbox"
+                id="keepOpen"
+                checked={keepOpen}
+                onChange={() => setKeepOpen(!keepOpen)}
+                className="w-4 h-4 rounded border-input text-blue-600 focus:ring-blue-600 accent-blue-600 cursor-pointer"
               />
               <label htmlFor="keepOpen" className="text-sm font-medium text-muted-foreground hover:text-foreground cursor-pointer select-none">
                 Keep open
               </label>
             </div>
             <div className="flex items-center gap-2.5">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => { setShowModal(false); setIsEditing(false); setEditId(null); }}
-                className="px-4 py-2 text-sm font-medium rounded-xl hover:bg-muted/80"
+                className="px-2 md:px-4 py-2 text-sm font-medium rounded-xl hover:bg-muted/80"
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleAddTransaction} 
+              <Button
+                onClick={handleAddTransaction}
                 disabled={submitting}
-                className="px-5 py-2 text-sm font-medium rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/30 transition-all duration-200"
+                className="px-5 py-2 text-sm font-medium rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-200"
               >
-                {submitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save Transaction' : 'Add Transaction')}
+                {submitting ? (isEditing ? 'Saving...' : 'Adding...') : (isEditing ? 'Save' : 'Add')}
               </Button>
             </div>
           </div>
@@ -630,15 +794,15 @@ const Transactions = ({ user }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-primary" />
+                <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Category
               </label>
               <div className="relative">
-                <select 
-                  name="category" 
-                  value={transaction.category} 
+                <select
+                  name="category"
+                  value={transaction.category}
                   onChange={handleChange}
-                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
+                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
                 >
                   <option value="">Select Category</option>
                   {categoryArray.map((cat) => (
@@ -653,7 +817,7 @@ const Transactions = ({ user }) => {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-primary" />
+                <Tag className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Label
               </label>
               <div className="relative">
@@ -661,7 +825,7 @@ const Transactions = ({ user }) => {
                   name="label"
                   value={selectedValueForLabel?.labelName || ''}
                   onChange={handleChange}
-                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
+                  className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all cursor-pointer shadow-sm appearance-none pr-8"
                 >
                   <option value="">Select Label</option>
                   {labelArray.map((lbl) => (
@@ -678,27 +842,27 @@ const Transactions = ({ user }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-primary" />
+                <CalendarIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Date
               </label>
-              <DatePicker 
-                selected={selectedDate} 
-                onChange={(date) => dispatch(setSelectedDate(date))} 
-                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => dispatch(setSelectedDate(date))}
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-medium focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-primary" />
+                <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 Amount
               </label>
-              <input 
-                type="number" 
-                name="amount" 
+              <input
+                type="number"
+                name="amount"
                 value={transaction.amount}
                 onChange={handleChange}
-                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-semibold focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm"
+                className="w-full h-11 rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm font-semibold focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all shadow-sm"
                 placeholder="0.00"
               />
             </div>
@@ -706,14 +870,14 @@ const Transactions = ({ user }) => {
 
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-primary" />
+              <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               Notes
             </label>
-            <textarea 
-              name="notes" 
+            <textarea
+              name="notes"
               value={transaction.notes}
               onChange={handleChange}
-              className="w-full rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm min-h-[90px] resize-none"
+              className="w-full rounded-xl border border-input/80 bg-background px-3.5 py-2.5 text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all shadow-sm min-h-[90px] resize-none"
               placeholder="Add some notes about this transaction..."
             />
           </div>

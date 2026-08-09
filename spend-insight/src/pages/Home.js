@@ -15,7 +15,7 @@ const Home = () => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" />
       </div>
 
-      <nav className="relative z-10 flex items-center justify-between px-6 py-8 mx-auto max-w-7xl">
+      <nav className="relative z-10 flex items-center justify-between px-2 py-8 mx-auto max-w-7xl">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/20">
             <PieChart className="w-6 h-6 text-primary-foreground" />
@@ -24,7 +24,7 @@ const Home = () => {
         </div>
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => loginWithRedirect()}>Log in</Button>
-          <Button onClick={() => loginWithRedirect({ screen_hint: 'signup' })}>Get Started</Button>
+          <Button onClick={() => loginWithRedirect({ screen_hint: 'signup' })}>Sign Up</Button>
         </div>
       </nav>
 
@@ -44,7 +44,7 @@ const Home = () => {
             </span>
           </h1>
           <p className="max-w-2xl mx-auto text-xl text-muted-foreground mb-10 leading-relaxed">
-            Beautifully simple expense tracking for modern individuals. 
+            Beautifully simple expense tracking for modern individuals.
             Gain deep insights into your spending habits and grow your savings effortlessly.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
